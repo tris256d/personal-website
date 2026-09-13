@@ -4,17 +4,25 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 const activities = await loadActivities();
 ---
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
   <title>Activities</title>
+  <script is:inline>try { document.documentElement.dataset.theme = localStorage.getItem('theme') === 'dark' ? 'dark' : 'light'; } catch {}</script>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 </head>
 <body>
   <main id="map" aria-label="Activity route map"></main>
   <p id="map-status" role="status">{activities.features.length ? '' : 'No activity data.'}</p>
+  <div class="map-actions"><button id="open-tour" hidden>Tour</button><a id="exit-map" href="/">Exit</a></div>
+  <section id="story" aria-labelledby="story-title">
+    <div aria-live="polite" aria-atomic="true"><h1 id="story-title">You've found my map.</h1><p id="story-text">A lot of my life has happened outside. Pan around yourself, or let me show you a few places.</p></div>
+    <div id="story-photos"></div>
+    <div class="story-actions"><button id="previous-stop" aria-label="Previous tour stop">←</button><span id="story-step">1 / 9</span><button id="next-stop" aria-label="Next tour stop">→</button><button id="explore">Explore</button></div>
+  </section>
+  <div class="terrain-controls" role="group" aria-label="Map terrain"><button data-mode="2d" aria-pressed="true" disabled>2D</button><button data-mode="3d" aria-pressed="false" disabled>3D</button></div>
   <noscript><p class="notice">Enable JavaScript to view the map.</p></noscript>
   <script id="activity-data" type="application/json" set:html={JSON.stringify(activities).replace(/</g, '\\u003c')} />
 </body>
@@ -26,7 +34,65 @@ import type { Activity } from '../lib/strava.server';
 const data = JSON.parse(document.querySelector('#activity-data')!.textContent!) as FeatureCollection<LineString, Activity>;
 const status = document.querySelector<HTMLElement>('#map-status')!;
 const token = import.meta.env.PUBLIC_MAPBOX_ACCESS_TOKEN;
-const style = import.meta.env.PUBLIC_MAPBOX_STYLE || 'mapbox://styles/mapbox/light-v11';
+const dark = document.documentElement.dataset.theme === 'dark';
+const style = import.meta.env.PUBLIC_MAPBOX_STYLE || `mapbox://styles/mapbox/${dark ? 'dark' : 'light'}-v11`;
+try {
+  const returnURL = new URL(sessionStorage.getItem('visualizer:return') || '/', location.origin);
+  if (returnURL.origin === location.origin && !/^\/visualizer\/?$/.test(returnURL.pathname)) {
+    document.querySelector<HTMLAnchorElement>('#exit-map')!.href = returnURL.pathname + returnURL.search + returnURL.hash;
+  }
+} catch {}
+type Stop = { title: string; text: string; camera?: { center: [number, number]; zoom: number; pitch?: number; bearing?: number }; activityNameIncludes?: string[]; use3D?: boolean; photos?: string[] };
+// Edit tour copy, fallback cameras, activity matches, and optional photo paths here.
+const tour: Stop[] = [
+  { title: "You've found my map.", text: 'A lot of my life has happened outside. Pan around yourself, or let me show you a few places.' },
+  { title: 'San Francisco', text: 'I grew up here. A lot of my childhood somehow ended up outside.', camera: { center: [-122.35, 37.8], zoom: 9 } },
+  { title: 'Belgium', text: 'Family, summers, and a lot of time spent here.', camera: { center: [4.6, 50.65], zoom: 7.5 } },
+  { title: 'Dilijan, Armenia', text: 'I spent two years here at boarding school. The mountains made it hard to stay inside.', camera: { center: [44.86, 40.74], zoom: 11 } },
+  { title: 'Aragats', text: 'One of the more questionable afternoon decisions.', camera: { center: [44.19, 40.53], zoom: 11, pitch: 60, bearing: -25 }, activityNameIncludes: ['Calm luh afternoon hike on the 2nd tallest mountain of armenia', '2nd tallest mountain', 'Aragats'], use3D: true },
+  { title: 'Mont Ventoux', text: 'About 85 km and roughly 6,000 ft of climbing. This one hurt.', camera: { center: [5.28, 44.17], zoom: 11, pitch: 58, bearing: 25 }, activityNameIncludes: ['Ventoux', 'Mont Ventoux'], use3D: true },
+  { title: 'Century', text: 'A very long day around the Bay.', camera: { center: [-122.35, 37.8], zoom: 9 }, activityNameIncludes: ['Century', '100 mile', '100mi'] },
+  { title: 'Half marathon', text: "One of the better ways I've found to see San Francisco.", camera: { center: [-122.45, 37.77], zoom: 11 }, activityNameIncludes: ['Half Marathon', 'Half marathon', '13.1'] },
+  { title: 'Lassen Peak', text: 'Another place where elevation is half the story.', camera: { center: [-121.505, 40.488], zoom: 12, pitch: 58, bearing: -20 }, activityNameIncludes: ['Lassen', 'Lassen Peak'], use3D: true },
+];
+const story = document.querySelector<HTMLElement>('#story')!;
+const tourButton = document.querySelector<HTMLButtonElement>('#open-tour')!;
+const previous = document.querySelector<HTMLButtonElement>('#previous-stop')!;
+const next = document.querySelector<HTMLButtonElement>('#next-stop')!;
+const modeButtons = [...document.querySelectorAll<HTMLButtonElement>('[data-mode]')];
+let step = 0;
+let moveToStop: ((stop: Stop) => void) | undefined;
+const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1700;
+function dismissTour() {
+  const hadFocus = story.contains(document.activeElement);
+  story.hidden = true; tourButton.hidden = false;
+  if (hadFocus) tourButton.focus();
+}
+function showStep(index: number, move = true) {
+  step = Math.max(0, Math.min(tour.length - 1, index));
+  const stop = tour[step];
+  document.querySelector('#story-title')!.textContent = stop.title;
+  document.querySelector('#story-text')!.textContent = stop.text;
+  document.querySelector('#story-step')!.textContent = `${step + 1} / ${tour.length}`;
+  previous.disabled = step === 0; next.disabled = step === tour.length - 1;
+  const photos = document.querySelector<HTMLElement>('#story-photos')!;
+  photos.replaceChildren();
+  for (const [i, path] of (stop.photos || []).slice(0, 3).entries()) {
+    const img = document.createElement('img'); img.alt = `${stop.title}, photo ${i + 1}`; img.loading = 'lazy';
+    img.addEventListener('error', () => img.remove(), { once: true }); img.src = path; photos.append(img);
+  }
+  if (move) moveToStop?.(stop);
+}
+previous.addEventListener('click', () => showStep(step - 1));
+next.addEventListener('click', () => showStep(step + 1));
+document.querySelector('#explore')!.addEventListener('click', dismissTour);
+tourButton.addEventListener('click', () => { story.hidden = false; tourButton.hidden = true; document.querySelector<HTMLButtonElement>('#explore')!.focus(); });
+document.addEventListener('keydown', e => {
+  if (story.hidden || e.altKey || e.ctrlKey || e.metaKey || (e.target as HTMLElement).closest('input,textarea,select,[contenteditable="true"]')) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); e.stopPropagation(); showStep(step + (e.key === 'ArrowRight' ? 1 : -1)); }
+  if (e.key === 'Escape') dismissTour();
+}, true);
+showStep(0, false);
 if (!token) {
   status.textContent = data.features.length ? 'Map unavailable.' : 'No activity data.';
 } else {
@@ -46,6 +112,19 @@ if (!token) {
           if (layer.id.includes('poi') || layer.id.includes('transit')) map.setLayoutProperty(layer.id, 'visibility', 'none');
         }
       }
+      map.addSource('mapbox-dem', { type: 'raster-dem', url: 'mapbox://mapbox.mapbox-terrain-dem-v1', tileSize: 512, maxzoom: 14 });
+      let mode3D = false;
+      function setMode(use3D: boolean, animate = true) {
+        map.stop();
+        mode3D = use3D;
+        map.setTerrain(use3D ? { source: 'mapbox-dem', exaggeration: 1 } : null);
+        modeButtons.forEach(button => button.setAttribute('aria-pressed', String((button.dataset.mode === '3d') === mode3D)));
+        if (animate) map.easeTo({ pitch: use3D ? 58 : 0, bearing: use3D ? map.getBearing() : 0, duration });
+      }
+      modeButtons.forEach(button => {
+        button.disabled = false;
+        button.addEventListener('click', () => setMode(button.dataset.mode === '3d'));
+      });
       map.addSource('activities', { type: 'geojson', data });
       const emphasized: mapboxgl.ExpressionSpecification = ['any', ['boolean', ['feature-state', 'hover'], false], ['boolean', ['feature-state', 'selected'], false]];
       map.addLayer({ id: 'routes', type: 'line', source: 'activities', layout: { 'line-join': 'round', 'line-cap': 'round' }, paint: {
@@ -57,6 +136,29 @@ if (!token) {
       const bounds = new mapboxgl.LngLatBounds();
       for (const feature of data.features) for (const [lng, lat] of feature.geometry.coordinates) bounds.extend([lng, lat]);
       if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 45, maxZoom: 13, duration: 0 });
+      const openingCamera = { center: map.getCenter(), zoom: map.getZoom() };
+      moveToStop = stop => {
+        clearSelection(); state(hovered, 'hover', false); hovered = undefined;
+        setMode(Boolean(stop.use3D), false);
+        const pitch = stop.use3D ? (stop.camera?.pitch ?? 58) : 0;
+        const bearing = stop.use3D ? (stop.camera?.bearing ?? 0) : 0;
+        const feature = stop.activityNameIncludes?.length ? data.features.find(feature => stop.activityNameIncludes!.some(name => feature.properties.name.toLowerCase().includes(name.toLowerCase()))) : undefined;
+        if (feature) {
+          selected = Number(feature.id ?? feature.properties.id); state(selected, 'selected', true);
+          const routeBounds = new mapboxgl.LngLatBounds();
+          for (const [lng, lat] of feature.geometry.coordinates) routeBounds.extend([lng, lat]);
+          if (!routeBounds.isEmpty()) {
+            const mobile = matchMedia('(max-width: 600px)').matches;
+            const padding = story.hidden ? 45 : mobile
+              ? { top: 60, bottom: Math.min(story.offsetHeight + 105, window.innerHeight * 0.55), left: 35, right: 35 }
+              : { top: 60, bottom: 60, left: 45, right: 370 };
+            map.fitBounds(routeBounds, { padding, maxZoom: 13, pitch, bearing, duration, retainPadding: false });
+            return;
+          }
+        }
+        map.flyTo({ ...(stop.camera || openingCamera), pitch, bearing, duration });
+      };
+      if (step > 0) moveToStop(tour[step]);
       map.on('mousemove', 'route-hit', e => {
         state(hovered, 'hover', false); hovered = Number(e.features?.[0]?.id);
         state(hovered, 'hover', true); map.getCanvas().style.cursor = 'pointer';
@@ -89,16 +191,35 @@ if (!token) {
 }
 </script>
 <style is:global>
-  html,body{margin:0;width:100%;height:100%;background:#f6f5f1;color:#252522;color-scheme:light}
+  :root{--bg:#f6f5f1;--ink:#252522;--muted:#706f68;--line:#dcdad2;--panel:rgba(246,245,241,.88);color-scheme:light}
+  :root[data-theme=dark]{--bg:#1c1d1b;--ink:#e8e7df;--muted:#a6a69c;--line:#393a34;--panel:rgba(28,29,27,.88);color-scheme:dark}
+  html,body{margin:0;width:100%;height:100%;background:var(--bg);color:var(--ink)}
   #map{width:100vw;height:100vh;height:100dvh}
-  #map-status,.notice{position:fixed;top:18px;left:20px;margin:0;font:12px/1.5 system-ui,sans-serif;color:#706f68;pointer-events:none}
+  #map-status,.notice{position:fixed;top:18px;left:20px;margin:0;font:12px/1.5 system-ui,sans-serif;color:var(--muted);pointer-events:none}
   #map-status:empty{display:none}
-  .mapboxgl-popup-content{background:#f6f5f1;border:1px solid #dcdad2;border-radius:0;padding:14px 26px 14px 14px;box-shadow:0 2px 10px #0001;max-width:calc(100vw - 64px)}
+  .mapboxgl-popup-content{background:var(--bg);border:1px solid var(--line);border-radius:0;padding:14px 26px 14px 14px;box-shadow:0 2px 10px #0001;max-width:calc(100vw - 64px)}
   .mapboxgl-popup-tip{display:none}
   .activity-card{font:12px/1.5 system-ui,sans-serif;overflow-wrap:anywhere}
   .activity-card h1{font-size:13px;font-weight:500;margin:0 0 5px}
-  .activity-card p{margin:4px 0;white-space:pre-wrap;color:#706f68}
-  .activity-card a{display:inline-block;margin-top:8px;color:#252522;text-decoration:none}
-  .activity-card a:focus-visible,.mapboxgl-popup-close-button:focus-visible{outline:2px solid #252522;outline-offset:3px}
-  .mapboxgl-popup-close-button{font-size:18px;color:#706f68;padding:3px 7px}
+  .activity-card p{margin:4px 0;white-space:pre-wrap;color:var(--muted)}
+  .activity-card a{display:inline-block;margin-top:8px;color:var(--ink);text-decoration:none}
+  .activity-card a:focus-visible,.mapboxgl-popup-close-button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+  .mapboxgl-popup-close-button{font-size:18px;color:var(--muted);padding:3px 7px}
+  [hidden]{display:none!important}
+  .map-actions,.terrain-controls{position:fixed;z-index:2;display:flex;gap:4px;background:var(--panel);padding:0 5px;font:11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
+  .map-actions{top:max(12px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right))}
+  .terrain-controls{bottom:calc(36px + env(safe-area-inset-bottom));left:max(16px,env(safe-area-inset-left))}
+  .map-actions a,.map-actions button,.terrain-controls button,.story-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;min-width:40px;padding:0 8px;border:0;border-radius:0;background:none;color:var(--muted);font:inherit;text-decoration:none;cursor:pointer}
+  button:disabled{opacity:.35;cursor:default}
+  .terrain-controls [aria-pressed=true]{color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+  .map-actions a:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+  #story{position:fixed;z-index:2;top:calc(64px + env(safe-area-inset-top));right:16px;width:320px;box-sizing:border-box;max-height:calc(100dvh - 150px);overflow:auto;padding:18px;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(5px);font:12px/1.65 system-ui,sans-serif}
+  #story h1{font-size:14px;font-weight:500;margin:0 0 9px}
+  #story p{margin:0;color:var(--muted)}
+  .story-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;font:11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted)}
+  #story-photos{display:flex;gap:4px;margin-top:12px}
+  #story-photos:empty{display:none}
+  #story-photos img{width:0;min-width:0;flex:1;height:100px;object-fit:cover}
+  #story-photos img:only-child{height:150px}
+  @media(max-width:600px){#story{top:auto;bottom:calc(88px + env(safe-area-inset-bottom));left:12px;right:12px;width:auto;max-height:42vh;max-height:42dvh;padding:14px}.story-actions button,.map-actions a,.map-actions button,.terrain-controls button{min-height:44px;min-width:44px}#story-photos img:only-child{height:110px}}
 </style>

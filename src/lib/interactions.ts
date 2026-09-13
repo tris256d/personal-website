@@ -76,5 +76,9 @@ time.addEventListener('click', () => {
  const now = performance.now();
  clockClicks = clockClicks.filter(at => now - at <= 1500);
  clockClicks.push(now);
- if (clockClicks.length >= 5) { clockClicks = []; location.href = '/visualizer'; }
+ if (clockClicks.length >= 5) {
+   clockClicks = [];
+   try { sessionStorage.setItem('visualizer:return', location.pathname + location.search + location.hash); } catch {}
+   location.href = '/visualizer';
+ }
 });
