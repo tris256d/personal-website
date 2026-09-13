@@ -69,3 +69,12 @@ terminalForm.addEventListener('submit',e=>{e.preventDefault();const command=term
 });
 // Native details provide keyboard and touch access; pointer hover is an enhancement.
 if(matchMedia('(hover:hover) and (pointer:fine)').matches){document.querySelectorAll<HTMLDetailsElement>('.project').forEach(project=>{let pinned=project.open;project.addEventListener('pointerenter',()=>{project.open=true;});project.addEventListener('pointerleave',()=>{project.open=pinned;});project.querySelector('summary')!.addEventListener('click',e=>{e.preventDefault();pinned=!pinned;project.open=pinned;});});}
+
+// Five quick clicks/taps on the clock open the hidden map.
+let clockClicks: number[] = [];
+time.addEventListener('click', () => {
+ const now = performance.now();
+ clockClicks = clockClicks.filter(at => now - at <= 1500);
+ clockClicks.push(now);
+ if (clockClicks.length >= 5) { clockClicks = []; location.href = '/visualizer'; }
+});
