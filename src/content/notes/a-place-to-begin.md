@@ -3,8 +3,6 @@ title: A place to begin
 description: A short opening note for this corner of the internet.
 date: 2026-09-13
 ---
-A personal website doesn't have to explain everything at once.
+I spend a lot of time moving between things that don't really neatly into one category so I wanted to create somewhere to keep the things I build and the ideas I want to remember  without turning them into LinkedIn posts or pretending they're finished.
 
-It can begin as a small collection: a project, a thought, a few useful links. The interesting part is what accumulates over time.
-
-This is an example note, here to give the site a starting point. Future notes can be shorter, longer, more technical, or just something worth keeping.
+So this site is deliberately small. Projects when there's something to show. Notes when there's something worth writing down. Everything else can stay off the internet.
