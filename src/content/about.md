@@ -1,11 +1,10 @@
 ---
 title: About
-description: A little context, with room for more.
+description: About Tristan de Halleux.
+# Starter biography; replace with your final bio.
 ---
-I'm Tristan de Halleux. This is my corner of the internet: a place for things I make, ideas I want to keep, and work still taking shape.
+I'm Tristan de Halleux. I study computer science and physics at Columbia.
 
-I like software that feels considered. Small details, clear intentions, and as little between an idea and its execution as possible.
+I'm interested in AI, infrastructure, physics, startups, and building things.
 
-## Elsewhere
-
-For now, [GitHub](https://github.com/tris256d) is the best place to explore. More personal context will find its way here over time.
+Currently in New York.

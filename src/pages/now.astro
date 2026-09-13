@@ -2,4 +2,4 @@
 import Layout from '../layouts/Layout.astro';
 import { Content, frontmatter } from '../content/now.md';
 ---
-<Layout title="Now" description={frontmatter.description}><p class="eyebrow">A snapshot, not a résumé</p><h1>Now</h1><article class="prose now"><Content /></article><p class="eyebrow updated">Updated {frontmatter.updated}</p></Layout>
+<Layout title="Now" description={frontmatter.description}><h1>Now</h1><article class="prose now"><Content /></article><p class="updated">Updated {frontmatter.updated}</p></Layout>

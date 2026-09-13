@@ -1,5 +1,9 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { notes } from '../../lib/notes';
+const years = [...new Set(notes.map(note => note.date.getUTCFullYear()))];
 ---
-<Layout title="Notes"><p class="eyebrow">03 / Thinking out loud</p><h1>Notes</h1><p class="page-intro">Observations, unfinished ideas, and things worth keeping.</p><div class="notes-list">{notes.map(note => <a href={'/notes/'+note.slug}><span>{note.title}<small>{note.description}</small></span><time datetime={note.date.toISOString()}>{note.date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'})}</time></a>)}</div></Layout>
+<Layout title="Notes">
+  <h1>Notes</h1>
+  {years.map(year => <section class="notes-year"><h2>{year}</h2><div class="notes-list">{notes.filter(note => note.date.getUTCFullYear() === year).map(note => <a href={'/notes/'+note.slug}><time datetime={note.date.toISOString()}>{note.date.toLocaleDateString('en-US',{month:'short',day:'2-digit',timeZone:'UTC'})}</time><span>{note.title}</span></a>)}</div></section>)}
+</Layout>

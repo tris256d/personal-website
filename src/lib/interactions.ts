@@ -25,9 +25,8 @@ document.querySelector('[data-open=palette]')?.addEventListener('click',()=>open
 async function run(command:Command){
  if(command.href){location.href=command.href;return;}
  if(command.action==='help'){open(help);return;}
- if(command.action==='theme'){
- const dark=document.documentElement.dataset.theme ? document.documentElement.dataset.theme==='dark' : matchMedia('(prefers-color-scheme:dark)').matches;
- const theme=dark?'light':'dark';document.documentElement.dataset.theme=theme;try{localStorage.setItem('theme',theme);}catch{}
+ if(command.action==='light'||command.action==='dark'){
+ const theme=command.action;document.documentElement.dataset.theme=theme;try{localStorage.setItem('theme',theme);}catch{}
  status.textContent=`Switched to ${theme} theme.`;return;
  }
  if(command.action==='email'&&data.email){try{await navigator.clipboard.writeText(data.email);status.textContent='Email copied.';}catch{status.textContent=data.email;}return;}

@@ -5,4 +5,4 @@ export function getStaticPaths() { return notes.map(note => ({params:{slug:note.
 const { note } = Astro.props;
 const Content = note.Content;
 ---
-<Layout title={note.title} description={note.description}><a class="eyebrow back" href="/notes">← All notes</a><h1>{note.title}</h1><time class="note-date" datetime={note.date.toISOString()}>{note.date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric',timeZone:'UTC'})}</time><article class="prose"><Content /></article></Layout>
+<Layout title={note.title} description={note.description}><a class="back" href="/notes">← All notes</a><h1>{note.title}</h1><time class="note-date" datetime={note.date.toISOString()}>{note.date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric',timeZone:'UTC'})}</time><article class="prose"><Content /></article></Layout>
