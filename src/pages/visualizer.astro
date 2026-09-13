@@ -19,9 +19,10 @@ const activities = await loadActivities();
   <div class="map-actions"><button id="open-tour" hidden>Tour</button><a id="exit-map" href="/">Exit</a></div>
   <section id="story" aria-labelledby="story-title">
     <div aria-live="polite" aria-atomic="true"><h1 id="story-title">You've found my map.</h1><p id="story-text">A lot of my life has happened outside. Pan around yourself, or let me show you a few places.</p></div>
-    <div id="story-photos"></div>
-    <div class="story-actions"><button id="previous-stop" aria-label="Previous tour stop">←</button><span id="story-step">1 / 9</span><button id="next-stop" aria-label="Next tour stop">→</button><button id="explore">Explore</button></div>
+    <a id="story-link" hidden target="_blank" rel="noopener noreferrer"></a>
+    <div class="story-actions"><button id="previous-stop" aria-label="Previous tour stop">←</button><span id="story-step">1 / 12</span><button id="next-stop" aria-label="Next tour stop">→</button><button id="explore">Explore</button></div>
   </section>
+  <div id="tour-media" aria-label="Tour photographs" hidden></div>
   <div class="terrain-controls" role="group" aria-label="Map terrain"><button data-mode="2d" aria-pressed="true" disabled>2D</button><button data-mode="3d" aria-pressed="false" disabled>3D</button></div>
   <noscript><p class="notice">Enable JavaScript to view the map.</p></noscript>
   <script id="activity-data" type="application/json" set:html={JSON.stringify(activities).replace(/</g, '\\u003c')} />
@@ -42,20 +43,60 @@ try {
     document.querySelector<HTMLAnchorElement>('#exit-map')!.href = returnURL.pathname + returnURL.search + returnURL.hash;
   }
 } catch {}
-type Stop = { title: string; text: string; camera?: { center: [number, number]; zoom: number; pitch?: number; bearing?: number }; activityNameIncludes?: string[]; use3D?: boolean; photos?: string[] };
-// Edit tour copy, fallback cameras, activity matches, and optional photo paths here.
+type Stop = { title: string; text: string; camera?: { center: [number, number]; zoom: number; pitch?: number; bearing?: number }; activityNameIncludes?: string[]; use3D?: boolean; media?: Array<{ src: string; type?: 'image' | 'video'; alt?: string }>; link?: { label: string; href: string } };
+// Media paths are relative to public/. First item is the collage hero.
+const images = (...names: string[]) => names.map(name => ({ src: `/visualizer/tour/${name}.webp` }));
+// Edit tour copy, fallback cameras, activity matches, and optional media here.
 const tour: Stop[] = [
   { title: "You've found my map.", text: 'A lot of my life has happened outside. Pan around yourself, or let me show you a few places.' },
-  { title: 'San Francisco', text: 'I grew up here. A lot of my childhood somehow ended up outside.', camera: { center: [-122.35, 37.8], zoom: 9 } },
-  { title: 'Belgium', text: 'Family, summers, and a lot of time spent here.', camera: { center: [4.6, 50.65], zoom: 7.5 } },
-  { title: 'Dilijan, Armenia', text: 'I spent two years here at boarding school. The mountains made it hard to stay inside.', camera: { center: [44.86, 40.74], zoom: 11 } },
-  { title: 'Aragats', text: 'One of the more questionable afternoon decisions.', camera: { center: [44.19, 40.53], zoom: 11, pitch: 60, bearing: -25 }, activityNameIncludes: ['Calm luh afternoon hike on the 2nd tallest mountain of armenia', '2nd tallest mountain', 'Aragats'], use3D: true },
-  { title: 'Mont Ventoux', text: 'About 85 km and roughly 6,000 ft of climbing. This one hurt.', camera: { center: [5.28, 44.17], zoom: 11, pitch: 58, bearing: 25 }, activityNameIncludes: ['Ventoux', 'Mont Ventoux'], use3D: true },
-  { title: 'Century', text: 'A very long day around the Bay.', camera: { center: [-122.35, 37.8], zoom: 9 }, activityNameIncludes: ['Century', '100 mile', '100mi'] },
+  { title: 'San Francisco', text: 'I grew up here. A lot of my childhood somehow ended up outside.', camera: { center: [-122.35, 37.8], zoom: 9 }, media: images('sf-1', 'sf-2', 'sf-3') },
+  { title: 'San Francisco Bay', text: "I've been sailing here since I was very little. Still one of my favorite ways to see the city.", camera: { center: [-122.44, 37.83], zoom: 11 }, media: images('sailing-1', 'sailing-2', 'sailing-3') },
+  { title: 'Palisades Tahoe', text: "I've been skiing since I was little. A lot of winters ended up somewhere around here.", camera: { center: [-120.235, 39.19], zoom: 12, pitch: 58, bearing: -20 }, use3D: true, media: [] },
+  { title: 'Belgium', text: 'Family, summers, and a lot of time spent here.', camera: { center: [4.6, 50.65], zoom: 7.5 }, media: images('belgium-1', 'belgium-2', 'belgium-3') },
+  { title: 'Dilijan, Armenia', text: 'I spent two years here at boarding school. The mountains made it hard to stay inside.', camera: { center: [44.86, 40.74], zoom: 11 }, media: images('dilijan-1') },
+  { title: 'Mt. Maymekh', text: 'One of the more questionable afternoon decisions.', camera: { center: [44.906, 40.699], zoom: 11, pitch: 60, bearing: -25 }, activityNameIncludes: ['Calm luh afternoon hike on the 2nd tallest mountain of armenia', 'Maymekh', 'Mt. Maymekh', 'Mets Maymekh'], use3D: true, media: images('maymekh-2', 'maymekh-1', 'maymekh-3'), link: { label: 'My Google review ↗', href: 'https://maps.app.goo.gl/G5WuqxHh9mAtzboQA' } },
+  { title: 'Mont Ventoux', text: 'About 85 km and roughly 6,000 ft of climbing. This one hurt.', camera: { center: [5.28, 44.17], zoom: 11, pitch: 58, bearing: 25 }, activityNameIncludes: ['Ventoux', 'Mont Ventoux'], use3D: true, media: images('ventoux-1', 'ventoux-2') },
+  { title: 'Century', text: 'A very long day around the Bay.', camera: { center: [-122.35, 37.8], zoom: 9 }, activityNameIncludes: ['Century', '100 mile', '100mi'], media: images('century-1', 'century-2', 'century-3') },
   { title: 'Half marathon', text: "One of the better ways I've found to see San Francisco.", camera: { center: [-122.45, 37.77], zoom: 11 }, activityNameIncludes: ['Half Marathon', 'Half marathon', '13.1'] },
-  { title: 'Lassen Peak', text: 'Another place where elevation is half the story.', camera: { center: [-121.505, 40.488], zoom: 12, pitch: 58, bearing: -20 }, activityNameIncludes: ['Lassen', 'Lassen Peak'], use3D: true },
+  { title: 'Lassen Peak', text: 'Another place where elevation is half the story.', camera: { center: [-121.505, 40.488], zoom: 12, pitch: 58, bearing: -20 }, activityNameIncludes: ['Lassen', 'Lassen Peak'], use3D: true, media: images('lassen-2') },
+  { title: 'New York City', text: "I'm trying to run and bike my way through all five boroughs.", camera: { center: [-73.98, 40.70], zoom: 9.5 }, media: [] },
 ];
 const story = document.querySelector<HTMLElement>('#story')!;
+const collage = document.querySelector<HTMLElement>('#tour-media')!;
+const storyLink = document.querySelector<HTMLAnchorElement>('#story-link')!;
+function clearMedia() {
+  collage.querySelectorAll('video').forEach(video => { video.pause(); video.removeAttribute('src'); video.load(); });
+  collage.replaceChildren();
+}
+function syncCollageSize() {
+  document.documentElement.style.setProperty('--story-height', `${story.offsetHeight}px`);
+}
+new ResizeObserver(syncCollageSize).observe(story);
+let preloadTimer: ReturnType<typeof setTimeout>;
+let nextPreloads: HTMLLinkElement[] = [];
+function renderMedia(stop: Stop) {
+  clearMedia();
+  collage.hidden = story.hidden || !stop.media?.length;
+  if (collage.hidden) return;
+  for (const [index, item] of (stop.media || []).slice(0, 3).entries()) {
+    const frame = document.createElement('div'); frame.className = 'tour-photo';
+    frame.style.setProperty('--delay', `${index * 90}ms`);
+    const asset = item.type === 'video' ? document.createElement('video') : document.createElement('img');
+    const reveal = () => frame.classList.add('ready');
+    if (asset instanceof HTMLVideoElement) {
+      asset.muted = true; asset.loop = true; asset.playsInline = true; asset.autoplay = true; asset.preload = 'auto';
+      asset.setAttribute('aria-label', item.alt || stop.title);
+      asset.addEventListener('loadeddata', reveal, { once: true });
+    } else {
+      asset.alt = item.alt || `${stop.title}, photo ${index + 1}`; asset.decoding = 'async'; asset.loading = 'eager';
+      asset.addEventListener('load', reveal, { once: true });
+    }
+    asset.addEventListener('error', () => frame.remove(), { once: true });
+    asset.src = item.src; frame.append(asset); collage.append(frame);
+    if (asset instanceof HTMLVideoElement) void asset.play().catch(() => {});
+  }
+  syncCollageSize();
+}
 const tourButton = document.querySelector<HTMLButtonElement>('#open-tour')!;
 const previous = document.querySelector<HTMLButtonElement>('#previous-stop')!;
 const next = document.querySelector<HTMLButtonElement>('#next-stop')!;
@@ -65,7 +106,7 @@ let moveToStop: ((stop: Stop) => void) | undefined;
 const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1700;
 function dismissTour() {
   const hadFocus = story.contains(document.activeElement);
-  story.hidden = true; tourButton.hidden = false;
+  story.hidden = true; tourButton.hidden = false; collage.hidden = true; clearMedia(); clearTimeout(preloadTimer);
   if (hadFocus) tourButton.focus();
 }
 function showStep(index: number, move = true) {
@@ -75,18 +116,25 @@ function showStep(index: number, move = true) {
   document.querySelector('#story-text')!.textContent = stop.text;
   document.querySelector('#story-step')!.textContent = `${step + 1} / ${tour.length}`;
   previous.disabled = step === 0; next.disabled = step === tour.length - 1;
-  const photos = document.querySelector<HTMLElement>('#story-photos')!;
-  photos.replaceChildren();
-  for (const [i, path] of (stop.photos || []).slice(0, 3).entries()) {
-    const img = document.createElement('img'); img.alt = `${stop.title}, photo ${i + 1}`; img.loading = 'lazy';
-    img.addEventListener('error', () => img.remove(), { once: true }); img.src = path; photos.append(img);
-  }
+  storyLink.hidden = !stop.link;
+  storyLink.textContent = stop.link?.label || '';
+  if (stop.link) storyLink.href = stop.link.href; else storyLink.removeAttribute('href');
+  renderMedia(stop);
+  clearTimeout(preloadTimer);
+  nextPreloads.forEach(link => link.remove()); nextPreloads = [];
+  preloadTimer = setTimeout(() => {
+    if (story.hidden) return;
+    for (const item of (tour[step + 1]?.media || []).slice(0, 3)) {
+      const link = document.createElement('link'); link.rel = 'prefetch'; link.as = item.type === 'video' ? 'video' : 'image'; link.href = item.src;
+      document.head.append(link); nextPreloads.push(link);
+    }
+  }, 400);
   if (move) moveToStop?.(stop);
 }
 previous.addEventListener('click', () => showStep(step - 1));
 next.addEventListener('click', () => showStep(step + 1));
 document.querySelector('#explore')!.addEventListener('click', dismissTour);
-tourButton.addEventListener('click', () => { story.hidden = false; tourButton.hidden = true; document.querySelector<HTMLButtonElement>('#explore')!.focus(); });
+tourButton.addEventListener('click', () => { story.hidden = false; tourButton.hidden = true; showStep(step, false); document.querySelector<HTMLButtonElement>('#explore')!.focus(); });
 document.addEventListener('keydown', e => {
   if (story.hidden || e.altKey || e.ctrlKey || e.metaKey || (e.target as HTMLElement).closest('input,textarea,select,[contenteditable="true"]')) return;
   if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); e.stopPropagation(); showStep(step + (e.key === 'ArrowRight' ? 1 : -1)); }
@@ -149,9 +197,10 @@ if (!token) {
           for (const [lng, lat] of feature.geometry.coordinates) routeBounds.extend([lng, lat]);
           if (!routeBounds.isEmpty()) {
             const mobile = matchMedia('(max-width: 600px)').matches;
+            const hasMedia = Boolean(stop.media?.length);
             const padding = story.hidden ? 45 : mobile
-              ? { top: 60, bottom: Math.min(story.offsetHeight + 105, window.innerHeight * 0.55), left: 35, right: 35 }
-              : { top: 60, bottom: 60, left: 45, right: 370 };
+              ? { top: hasMedia ? Math.min(120, window.innerHeight * 0.18) : 60, bottom: Math.min(story.offsetHeight + 105, window.innerHeight * 0.45), left: 35, right: 35 }
+              : { top: 60, bottom: 60, left: hasMedia ? Math.min(window.innerWidth * 0.28, 330) : 45, right: Math.min(window.innerWidth * 0.32, 370) };
             map.fitBounds(routeBounds, { padding, maxZoom: 13, pitch, bearing, duration, retainPadding: false });
             return;
           }
@@ -217,9 +266,20 @@ if (!token) {
   #story h1{font-size:14px;font-weight:500;margin:0 0 9px}
   #story p{margin:0;color:var(--muted)}
   .story-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;font:11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted)}
-  #story-photos{display:flex;gap:4px;margin-top:12px}
-  #story-photos:empty{display:none}
-  #story-photos img{width:0;min-width:0;flex:1;height:100px;object-fit:cover}
-  #story-photos img:only-child{height:150px}
-  @media(max-width:600px){#story{top:auto;bottom:calc(88px + env(safe-area-inset-bottom));left:12px;right:12px;width:auto;max-height:42vh;max-height:42dvh;padding:14px}.story-actions button,.map-actions a,.map-actions button,.terrain-controls button{min-height:44px;min-width:44px}#story-photos img:only-child{height:110px}}
+  @media(max-width:600px){#story{top:auto;bottom:calc(88px + env(safe-area-inset-bottom));left:12px;right:12px;width:auto;max-height:42vh;max-height:42dvh;padding:14px}.story-actions button,.map-actions a,.map-actions button,.terrain-controls button{min-height:44px;min-width:44px}}
+  #story-link{display:inline-block;margin-top:10px;font-size:11px;color:var(--ink);text-decoration:none}
+  #story-link:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+  #tour-media{position:fixed;z-index:1;pointer-events:none;left:24px;top:18vh;width:min(38vw,480px);height:min(56vh,450px)}
+  .tour-photo{position:absolute;width:63%;height:75%;left:0;top:10%;--rotation:-.8deg;opacity:0}
+  .tour-photo:nth-child(2){width:43%;height:47%;left:56%;top:0;--rotation:1deg}
+  .tour-photo:nth-child(3){width:43%;height:46%;left:53%;top:48%;--rotation:-.6deg}
+  .tour-photo:only-child{width:92%;height:90%;left:2%;top:2%}
+  .tour-photo img,.tour-photo video{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 5px #0002)}
+  .tour-photo.ready{animation:media-in 300ms ease-out var(--delay) both}
+  @keyframes media-in{from{opacity:0;transform:translateY(8px) scale(.985) rotate(var(--rotation))}to{opacity:1;transform:translateY(0) scale(1) rotate(var(--rotation))}}
+  @media(max-width:600px){
+    #tour-media{top:auto;bottom:calc(100px + env(safe-area-inset-bottom) + var(--story-height,170px));left:16px;width:min(72vw,340px);height:min(30dvh,max(55px,calc(100dvh - var(--story-height,170px) - 200px)))}
+    #story{max-height:32dvh}
+  }
+  @media(prefers-reduced-motion:reduce){.tour-photo.ready{animation:none;opacity:1;transform:rotate(var(--rotation))}}
 </style>
