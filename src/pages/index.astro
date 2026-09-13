@@ -2,10 +2,9 @@
 import Layout from '../layouts/Layout.astro';
 import { Content } from '../content/home.md';
 import { site } from '../config';
-const links = [{ label: 'GitHub', href: site.github }, { label: 'LinkedIn', href: site.linkedin }, { label: 'Email', href: site.email ? `mailto:${site.email}` : '' }].filter(link => link.href);
 ---
 <Layout>
   <h1 class="sr-only">{site.name}</h1>
   <div class="prose"><Content /></div>
-  <div class="social-links">{links.map((link, index) => <>{index > 0 && <span aria-hidden="true">·</span>}<a href={link.href}>{link.label}</a></>)}</div>
+  <div class="answer-links"><a href="/now">The current snapshot ↗</a></div>
 </Layout>

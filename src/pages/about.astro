@@ -1,5 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { site } from '../config';
+const links = [{ label: 'GitHub', href: site.github }, { label: 'LinkedIn', href: site.linkedin }, { label: 'Email', href: site.email ? `mailto:${site.email}` : '' }].filter(link => link.href);
 import { Content, frontmatter } from '../content/about.md';
 ---
-<Layout title="About" description={frontmatter.description}><h1>About</h1><article class="prose"><Content /></article></Layout>
+<Layout title="About" description={frontmatter.description}><h1>About</h1><article class="prose"><Content /></article>
+  <div class="social-links">{links.map((link, index) => <>{index > 0 && <span aria-hidden="true">·</span>}<a href={link.href}>{link.label}</a></>)}</div>
+</Layout>
