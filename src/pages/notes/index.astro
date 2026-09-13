@@ -1,0 +1,5 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { notes } from '../../lib/notes';
+---
+<Layout title="Notes"><p class="eyebrow">03 / Thinking out loud</p><h1>Notes</h1><p class="page-intro">Observations, unfinished ideas, and things worth keeping.</p><div class="notes-list">{notes.map(note => <a href={'/notes/'+note.slug}><span>{note.title}<small>{note.description}</small></span><time datetime={note.date.toISOString()}>{note.date.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'})}</time></a>)}</div></Layout>

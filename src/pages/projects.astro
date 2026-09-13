@@ -1,0 +1,5 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { projects } from '../data/projects';
+---
+<Layout title="Projects"><p class="eyebrow">02 / Things taking shape</p><h1>Projects</h1><p class="page-intro">A small, growing collection of things made with care.</p><div class="projects">{projects.map(project => <details class="project"><summary><span>{project.title}</span><span class="project-year">{project.year} <span class="plus">+</span></span></summary><div class="project-detail"><p>{project.description}</p><div class="project-meta"><span>{project.status}</span>{project.tags.length > 0 && <span>{project.tags.join(' / ')}</span>}{project.url && <a href={project.url}>Visit ↗</a>}{project.repo && <a href={project.repo}>Source ↗</a>}</div></div></details>)}</div></Layout>

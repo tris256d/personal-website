@@ -1,0 +1,27 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { answers } from '../data/answers';
+---
+<Layout title="Ask"><p class="eyebrow">04 / A different way in</p><h1>Ask</h1><p class="page-intro">What would you like to know?</p><form id="ask-form"><label for="question" class="sr-only">Your question</label><span aria-hidden="true">❯</span><input id="question" name="question" placeholder="what are you working on?" autocomplete="off" maxlength="500" required /><button type="submit" aria-label="Ask question">↵</button></form><div class="suggestions" aria-label="Suggested questions">{answers.map(a => <button data-question={a.question}>{a.question} <span>↗</span></button>)}</div><div id="answer" aria-live="polite" aria-atomic="true"></div><p class="ask-note">Answers from information Tristan has made public.<br />A small local index, with no AI service behind it.</p><noscript><p>Enable JavaScript to ask a question, or explore <a href="/about">About</a>, <a href="/projects">Projects</a>, and <a href="/now">Now</a>.</p></noscript></Layout>
+<script>
+import { answerQuestion } from '../lib/ask';
+const form = document.querySelector<HTMLFormElement>('#ask-form')!;
+const input = document.querySelector<HTMLInputElement>('#question')!;
+const output = document.querySelector<HTMLDivElement>('#answer')!;
+let request = 0;
+async function ask(question: string) {
+ if (!question.trim()) return;
+ const id = ++request;
+ const result = await answerQuestion(question);
+ if(id !== request) return;
+ output.replaceChildren();
+ const heading = document.createElement('p'); heading.className='answer-question'; heading.textContent=question;
+ const paragraph = document.createElement('p'); paragraph.textContent=result.answer;
+ const links = document.createElement('div'); links.className='answer-links';
+ for(const link of result.links) { const a=document.createElement('a'); a.href=link.href; a.textContent=link.label+' ↗'; links.append(a); }
+ output.append(heading,paragraph,links);
+ if(!matchMedia('(prefers-reduced-motion: reduce)').matches) output.animate([{opacity:0,transform:'translateY(3px)'},{opacity:1,transform:'translateY(0)'}],{duration:180});
+}
+form.addEventListener('submit',e=>{e.preventDefault();void ask(input.value);});
+document.querySelectorAll<HTMLButtonElement>('[data-question]').forEach(b=>b.addEventListener('click',()=>{input.value=b.dataset.question!; void ask(input.value);}));
+</script>
