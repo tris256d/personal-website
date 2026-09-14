@@ -23,15 +23,44 @@ const suggestions = document.querySelector<HTMLDivElement>('.suggestions')!;
 let current: AbortController | undefined;
 let pending: HTMLElement | undefined;
 let follow = true;
-viewport.addEventListener('scroll', () => { follow = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 48; });
-function scrollToAnswer(force = false) { if (force || follow) viewport.scrollTop = viewport.scrollHeight; }
+let lastScrollTop = 0;
+viewport.addEventListener('scroll', () => {
+ const top = viewport.scrollTop;
+ if (top < lastScrollTop) follow = false;
+ else if (top > lastScrollTop) follow = viewport.scrollHeight - top - viewport.clientHeight < 48;
+ lastScrollTop = top;
+});
+let scrollFrame = 0;
+function scrollToAnswer(force = false) {
+ if (force) follow = true;
+ if (!follow || scrollFrame) return;
+ scrollFrame = requestAnimationFrame(() => {
+   scrollFrame = 0;
+   if (follow) {
+     const bottom = viewport.scrollHeight - viewport.clientHeight;
+     if (bottom > viewport.scrollTop) viewport.scrollTop = bottom;
+   }
+ });
+}
+// Cancel following immediately on an upward gesture, before a queued frame runs.
+viewport.addEventListener('wheel', event => { if (event.deltaY < 0) follow = false; }, { passive: true });
+let touchY = 0;
+viewport.addEventListener('touchstart', event => { touchY = event.touches[0].clientY; }, { passive: true });
+viewport.addEventListener('touchmove', event => {
+ const y = event.touches[0].clientY;
+ if (y > touchY) follow = false;
+ touchY = y;
+}, { passive: true });
+viewport.addEventListener('keydown', event => {
+ if (event.target === viewport && ['ArrowUp', 'PageUp', 'Home'].includes(event.key)) follow = false;
+});
 async function ask(raw: string) {
  const question = raw.trim();
  if (!question || question.length > 400) { input.reportValidity(); return; }
  current?.abort();
  pending?.remove(); // Discard the whole unfinished exchange, never half a history pair.
  suggestions.remove();
- while (messages.length > 6) { messages.splice(0, 2); output.firstElementChild?.remove(); }
+ viewport.classList.add('has-conversation');
  const history = messages.map(message => ({ ...message }));
  const request = current = new AbortController();
  const exchange = document.createElement('div'); exchange.className = 'ask-exchange';
@@ -55,6 +84,15 @@ async function ask(raw: string) {
        if (answer.trim()) {
          messages.push({ role: 'user', content: question }, { role: 'assistant', content: answer });
          pending = undefined;
+         while (messages.length > 16) {
+           messages.splice(0, 2);
+           const oldest = output.firstElementChild as HTMLElement;
+           const removedHeight = oldest.getBoundingClientRect().height + parseFloat(getComputedStyle(oldest).marginBottom);
+           oldest.remove();
+           viewport.scrollTop = Math.max(0, viewport.scrollTop - removedHeight);
+           lastScrollTop = viewport.scrollTop;
+         }
+         scrollToAnswer();
        }
      }
      if (event.type === 'error' && !complete) throw new Error('The answer was interrupted. Please try again.');
