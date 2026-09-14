@@ -35,6 +35,11 @@ async function run(command:Command){
 function highlight(){results.querySelectorAll<HTMLButtonElement>('button').forEach((b,i)=>{b.dataset.active=String(i===active);});results.querySelector('[data-active=true]')?.scrollIntoView({block:'nearest'});}
 function render(){
  const query=search.value.toLowerCase().trim();filtered=data.commands.filter(c=>(c.label+' '+c.detail).toLowerCase().includes(query));active=0;results.replaceChildren();
+ const question=search.value.trim();
+ const obvious=filtered.some(command=>command.label.toLowerCase()===query);
+ if(question && question.length<=400 && !obvious && (/\?/.test(question) || question.split(/\s+/).length>=3 || (!filtered.length && question.split(/\s+/).length>=2))) {
+   filtered.push({label:`Ask "${question}"`,detail:'Ask',href:'/ask?q='+encodeURIComponent(question)});
+ }
  filtered.forEach((command,index)=>{const b=document.createElement('button');b.type='button';const label=document.createElement('span');label.textContent=command.label;const detail=document.createElement('small');detail.textContent=command.detail;b.append(label,detail);b.addEventListener('click',()=>void run(command));b.addEventListener('focus',()=>{active=index;highlight();});b.addEventListener('pointermove',()=>{active=index;highlight();});results.append(b);});
  if(!filtered.length){const p=document.createElement('p');p.className='dialog-hint';p.textContent='No matches. Try a page, project, or note.';results.append(p);}highlight();
 }

@@ -1,27 +1,48 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { answers } from '../data/answers';
+const suggestions = ['what is Tristan working on?', 'what has he built?', 'what should I talk to Tristan about?'];
 ---
-<Layout title="Ask"><h1>Ask</h1><form id="ask-form"><label for="question" class="sr-only">Your question</label><span aria-hidden="true">❯</span><input id="question" name="question" placeholder="ask something..." autocomplete="off" maxlength="500" required /><button type="submit" aria-label="Ask question">↵</button></form><div class="suggestions" aria-label="Suggested questions">{answers.slice(0, 3).map(a => <button data-question={a.question}>{a.question.toLowerCase()}</button>)}</div><div id="answer" aria-live="polite" aria-atomic="true"></div><noscript><p>Enable JavaScript to ask a question, or explore <a href="/about">About</a>, <a href="/projects">Projects</a>, and <a href="/now">Now</a>.</p></noscript></Layout>
+<Layout title="Ask"><h1>Ask</h1><form id="ask-form"><label for="question" class="sr-only">Your question</label><span aria-hidden="true">❯</span><input id="question" name="question" placeholder="ask something..." autocomplete="off" maxlength="400" required /><button type="submit" aria-label="Ask question">↵</button></form><div class="suggestions" aria-label="Suggested questions">{suggestions.map(question => <button data-question={question}>{question}</button>)}</div><div id="answer" aria-live="polite" aria-atomic="true"></div><noscript><p>Enable JavaScript to ask a question, or explore <a href="/about">About</a>, <a href="/projects">Projects</a>, and <a href="/now">Now</a>.</p></noscript></Layout>
 <script>
-import { answerQuestion } from '../lib/ask';
+import { readEvents } from '../lib/ask';
 const form = document.querySelector<HTMLFormElement>('#ask-form')!;
 const input = document.querySelector<HTMLInputElement>('#question')!;
 const output = document.querySelector<HTMLDivElement>('#answer')!;
-let request = 0;
-async function ask(question: string) {
- if (!question.trim()) return;
- const id = ++request;
- const result = await answerQuestion(question);
- if(id !== request) return;
- output.replaceChildren();
- const heading = document.createElement('p'); heading.className='answer-question'; heading.textContent=question;
- const paragraph = document.createElement('p'); paragraph.textContent=result.answer;
- const links = document.createElement('div'); links.className='answer-links';
- for(const link of result.links) { const a=document.createElement('a'); a.href=link.href; a.textContent=link.label+' ↗'; links.append(a); }
- output.append(heading,paragraph,links);
- if(!matchMedia('(prefers-reduced-motion: reduce)').matches) output.animate([{opacity:0,transform:'translateY(3px)'},{opacity:1,transform:'translateY(0)'}],{duration:180});
+let current: AbortController | undefined;
+async function ask(raw: string) {
+ const question = raw.trim();
+ if (!question || question.length > 400) { input.reportValidity(); return; }
+ current?.abort();
+ const request = current = new AbortController();
+ const heading = document.createElement('p'); heading.className = 'answer-question'; heading.textContent = question;
+ const paragraph = document.createElement('p'); paragraph.style.whiteSpace = 'pre-wrap'; paragraph.textContent = 'thinking...';
+ output.replaceChildren(heading, paragraph);
+ let answer = '';
+ try {
+   const response = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }), signal: request.signal, cache: 'no-store' });
+   if (!response.ok || !response.body) throw new Error(response.status === 429 ? 'Too many questions. Please wait a minute and try again.' : 'Ask is temporarily unavailable. Please try again later.');
+   let complete = false;
+   for await (const event of readEvents(response.body)) {
+     if (request.signal.aborted) return;
+     if (event.type === 'response.output_text.delta' && typeof event.delta === 'string') { answer += event.delta; paragraph.textContent = answer; }
+     if (event.type === 'response.completed') complete = true;
+     if (event.type === 'error') throw new Error('The answer was interrupted. Please try again.');
+   }
+   if (!complete || !answer) throw new Error('The answer was interrupted. Please try again.');
+ } catch (error) {
+   if (request.signal.aborted) return;
+   const message = error instanceof Error && /^(Ask is|Too many|The answer)/.test(error.message) ? error.message : 'Unable to connect. Please try again.';
+   paragraph.textContent = answer ? answer + '\n\n' + message : message;
+ }
 }
-form.addEventListener('submit',e=>{e.preventDefault();void ask(input.value);});
-document.querySelectorAll<HTMLButtonElement>('[data-question]').forEach(b=>b.addEventListener('click',()=>{input.value=b.dataset.question!; void ask(input.value);}));
+form.addEventListener('submit', e => { e.preventDefault(); void ask(input.value); });
+document.querySelectorAll<HTMLButtonElement>('[data-question]').forEach(button => button.addEventListener('click', () => { input.value = button.dataset.question!; void ask(input.value); }));
+const url = new URL(location.href);
+const question = url.searchParams.get('q');
+if (question) {
+ url.searchParams.delete('q'); history.replaceState(null, '', url);
+ input.value = question;
+ void ask(question);
+}
+window.addEventListener('pagehide', () => current?.abort());
 </script>
