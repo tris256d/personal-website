@@ -49,3 +49,16 @@
  #palette[open]{display:flex;flex-direction:column}
  #command-results{min-height:0;overflow-y:auto}
 }
+
+.ask-chrome{display:contents}
+@media(max-width:600px), (max-width:950px) and (pointer:coarse){
+ header::before{content:'';position:absolute;inset:auto calc(-1 * max(25px,env(safe-area-inset-right))) 0 calc(-1 * max(25px,env(safe-area-inset-left)));height:calc(100% + 100svh);background:var(--bg);z-index:-1;pointer-events:none}
+ #palette:focus,#palette:focus-visible{outline:none}
+ #palette .dialog-top button[data-close]{font-size:0}
+ #palette .dialog-top button[data-close]::after{content:'×';font-size:24px;line-height:1}
+ #palette .dialog-hint{display:none}
+ .ask-chrome{display:block;position:sticky;top:var(--mobile-header-height,0px);z-index:4;background:var(--bg)}
+ .ask-chrome::after{content:'';position:absolute;top:100%;left:0;right:0;height:16px;background:linear-gradient(var(--bg),transparent);pointer-events:none}
+ #ask-transcript,#ask-transcript.has-conversation{height:auto;max-height:none;overflow:visible;mask-image:none;-webkit-mask-image:none;padding-bottom:0;overflow-anchor:auto}
+ #ask-transcript .ask-exchange:last-child{min-height:max(0px,calc(100svh - var(--mobile-header-height,0px) - var(--mobile-ask-height,0px) - 32px))}
+}

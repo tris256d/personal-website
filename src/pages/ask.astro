@@ -2,9 +2,11 @@
 import Layout from '../layouts/Layout.astro';
 ---
 <Layout title="Ask">
- <h1>Ask</h1>
  <section id="ask">
+  <div class="ask-chrome">
+  <h1>Ask</h1>
   <form id="ask-form"><label for="question" class="sr-only">Your question</label><span aria-hidden="true">❯</span><input id="question" name="question" placeholder="ask something..." autocomplete="off" maxlength="400" required /><button type="submit" aria-label="Ask question">↵</button></form>
+  </div>
   <div class="suggestions" aria-label="Suggested questions"></div>
   <div id="ask-transcript" tabindex="0" role="region" aria-label="Ask conversation"><div id="answer" role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions text"></div></div>
  </section>
@@ -20,6 +22,18 @@ const input = document.querySelector<HTMLInputElement>('#question')!;
 const viewport = document.querySelector<HTMLElement>('#ask-transcript')!;
 const output = document.querySelector<HTMLDivElement>('#answer')!;
 const suggestions = document.querySelector<HTMLDivElement>('.suggestions')!;
+const mobileAsk = matchMedia('(max-width:600px), (max-width:950px) and (pointer:coarse)');
+const chrome = document.querySelector<HTMLElement>('.ask-chrome')!;
+const header = document.querySelector<HTMLElement>('header')!;
+function measureChrome() {
+ if (!mobileAsk.matches) return;
+ document.documentElement.style.setProperty('--mobile-header-height', `${header.getBoundingClientRect().height}px`);
+ document.documentElement.style.setProperty('--mobile-ask-height', `${chrome.getBoundingClientRect().height}px`);
+}
+const chromeObserver = new ResizeObserver(measureChrome);
+chromeObserver.observe(header); chromeObserver.observe(chrome);
+mobileAsk.addEventListener('change', measureChrome); measureChrome();
+let positionTimer: ReturnType<typeof setTimeout>;
 let current: AbortController | undefined;
 let pending: HTMLElement | undefined;
 let follow = true;
@@ -32,11 +46,12 @@ viewport.addEventListener('scroll', () => {
 });
 let scrollFrame = 0;
 function scrollToAnswer(force = false) {
+ if (mobileAsk.matches) return;
  if (force) follow = true;
  if (!follow || scrollFrame) return;
  scrollFrame = requestAnimationFrame(() => {
    scrollFrame = 0;
-   if (follow) {
+   if (follow && !mobileAsk.matches) {
      const bottom = viewport.scrollHeight - viewport.clientHeight;
      if (bottom > viewport.scrollTop) viewport.scrollTop = bottom;
    }
@@ -87,7 +102,17 @@ async function ask(raw: string) {
  const heading = document.createElement('p'); heading.className = 'answer-question'; heading.textContent = question;
  const paragraph = document.createElement('p'); paragraph.className = 'ask-response ask-waiting'; paragraph.setAttribute('aria-label', 'Waiting for reply');
  exchange.append(heading, paragraph); output.append(exchange); pending = exchange;
- input.value = ''; follow = true; scrollToAnswer(true);
+ input.value = ''; follow = true;
+ clearTimeout(positionTimer);
+ if (mobileAsk.matches) {
+   // Position once after keyboard dismissal, never as tokens arrive.
+   positionTimer = setTimeout(() => {
+     if (request.signal.aborted || !mobileAsk.matches) return;
+     measureChrome();
+     const top = window.scrollY + exchange.getBoundingClientRect().top - header.getBoundingClientRect().height - chrome.getBoundingClientRect().height - 16;
+     window.scrollTo({ top: Math.max(0, top), behavior: 'instant' });
+   }, 250);
+ } else scrollToAnswer(true);
  let answer = '';
  try {
    const response = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId, history, question }), signal: request.signal, cache: 'no-store' });
@@ -110,8 +135,10 @@ async function ask(raw: string) {
            const oldest = output.firstElementChild as HTMLElement;
            const removedHeight = oldest.getBoundingClientRect().height + parseFloat(getComputedStyle(oldest).marginBottom);
            oldest.remove();
-           viewport.scrollTop = Math.max(0, viewport.scrollTop - removedHeight);
-           lastScrollTop = viewport.scrollTop;
+           if (!mobileAsk.matches) {
+             viewport.scrollTop = Math.max(0, viewport.scrollTop - removedHeight);
+             lastScrollTop = viewport.scrollTop;
+           }
          }
          scrollToAnswer();
        }
