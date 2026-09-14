@@ -1,48 +1,97 @@
 ---
 import Layout from '../layouts/Layout.astro';
-const suggestions = ['what is Tristan working on?', 'what has he built?', 'what should I talk to Tristan about?'];
 ---
-<Layout title="Ask"><h1>Ask</h1><form id="ask-form"><label for="question" class="sr-only">Your question</label><span aria-hidden="true">❯</span><input id="question" name="question" placeholder="ask something..." autocomplete="off" maxlength="400" required /><button type="submit" aria-label="Ask question">↵</button></form><div class="suggestions" aria-label="Suggested questions">{suggestions.map(question => <button data-question={question}>{question}</button>)}</div><div id="answer" aria-live="polite" aria-atomic="true"></div><noscript><p>Enable JavaScript to ask a question, or explore <a href="/about">About</a>, <a href="/projects">Projects</a>, and <a href="/now">Now</a>.</p></noscript></Layout>
+<Layout title="Ask">
+ <h1>Ask</h1>
+ <section id="ask-viewport" tabindex="0" aria-label="Ask conversation">
+  <form id="ask-form"><label for="question" class="sr-only">Your question</label><span aria-hidden="true">❯</span><input id="question" name="question" placeholder="ask something..." autocomplete="off" maxlength="400" required /><button type="submit" aria-label="Ask question">↵</button></form>
+  <div class="suggestions" aria-label="Suggested questions"></div>
+  <div id="answer" role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions text"></div>
+ </section>
+ <noscript><p>Enable JavaScript to ask a question, or explore <a href="/about">About</a>, <a href="/projects">Projects</a>, and <a href="/now">Now</a>.</p></noscript>
+</Layout>
 <script>
 import { readEvents } from '../lib/ask';
+type Message = { role: 'user' | 'assistant'; content: string };
+const messages: Message[] = [];
+const sessionId = crypto.randomUUID();
 const form = document.querySelector<HTMLFormElement>('#ask-form')!;
 const input = document.querySelector<HTMLInputElement>('#question')!;
+const viewport = document.querySelector<HTMLElement>('#ask-viewport')!;
 const output = document.querySelector<HTMLDivElement>('#answer')!;
+const suggestions = document.querySelector<HTMLDivElement>('.suggestions')!;
 let current: AbortController | undefined;
+let pending: HTMLElement | undefined;
+let follow = true;
+viewport.addEventListener('scroll', () => { follow = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 48; });
+function scrollToAnswer(force = false) { if (force || follow) viewport.scrollTop = viewport.scrollHeight; }
 async function ask(raw: string) {
  const question = raw.trim();
  if (!question || question.length > 400) { input.reportValidity(); return; }
  current?.abort();
+ pending?.remove(); // Discard the whole unfinished exchange, never half a history pair.
+ suggestions.remove();
+ while (messages.length > 6) { messages.splice(0, 2); output.firstElementChild?.remove(); }
+ const history = messages.map(message => ({ ...message }));
  const request = current = new AbortController();
+ const exchange = document.createElement('div'); exchange.className = 'ask-exchange';
  const heading = document.createElement('p'); heading.className = 'answer-question'; heading.textContent = question;
- const paragraph = document.createElement('p'); paragraph.style.whiteSpace = 'pre-wrap'; paragraph.textContent = 'thinking...';
- output.replaceChildren(heading, paragraph);
+ const paragraph = document.createElement('p'); paragraph.className = 'ask-response ask-waiting'; paragraph.setAttribute('aria-label', 'Waiting for reply');
+ exchange.append(heading, paragraph); output.append(exchange); pending = exchange;
+ input.value = ''; follow = true; scrollToAnswer(true);
  let answer = '';
  try {
-   const response = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }), signal: request.signal, cache: 'no-store' });
+   const response = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId, history, question }), signal: request.signal, cache: 'no-store' });
    if (!response.ok || !response.body) throw new Error(response.status === 429 ? 'Too many questions. Please wait a minute and try again.' : 'Ask is temporarily unavailable. Please try again later.');
    let complete = false;
    for await (const event of readEvents(response.body)) {
      if (request.signal.aborted) return;
-     if (event.type === 'response.output_text.delta' && typeof event.delta === 'string') { answer += event.delta; paragraph.textContent = answer; }
-     if (event.type === 'response.completed') complete = true;
-     if (event.type === 'error') throw new Error('The answer was interrupted. Please try again.');
+     if (event.type === 'response.output_text.delta' && event.delta) {
+       paragraph.classList.remove('ask-waiting'); paragraph.removeAttribute('aria-label');
+       answer += event.delta; paragraph.textContent = answer; scrollToAnswer();
+     }
+     if (event.type === 'response.completed') {
+       complete = true;
+       if (answer.trim()) {
+         messages.push({ role: 'user', content: question }, { role: 'assistant', content: answer });
+         pending = undefined;
+       }
+     }
+     if (event.type === 'error' && !complete) throw new Error('The answer was interrupted. Please try again.');
    }
-   if (!complete || !answer) throw new Error('The answer was interrupted. Please try again.');
+   if (request.signal.aborted) return;
+   if (!complete || !answer.trim()) throw new Error('The answer was interrupted. Please try again.');
  } catch (error) {
    if (request.signal.aborted) return;
-   const message = error instanceof Error && /^(Ask is|Too many|The answer)/.test(error.message) ? error.message : 'Unable to connect. Please try again.';
-   paragraph.textContent = answer ? answer + '\n\n' + message : message;
+   paragraph.classList.remove('ask-waiting'); paragraph.removeAttribute('aria-label');
+   paragraph.classList.add('ask-failure');
+   paragraph.textContent = error instanceof Error && /^(Ask is|Too many|The answer)/.test(error.message) ? error.message : 'Unable to connect. Please try again.';
+   scrollToAnswer();
  }
 }
 form.addEventListener('submit', e => { e.preventDefault(); void ask(input.value); });
-document.querySelectorAll<HTMLButtonElement>('[data-question]').forEach(button => button.addEventListener('click', () => { input.value = button.dataset.question!; void ask(input.value); }));
 const url = new URL(location.href);
 const question = url.searchParams.get('q');
 if (question) {
- url.searchParams.delete('q'); history.replaceState(null, '', url);
- input.value = question;
- void ask(question);
+ suggestions.remove(); url.searchParams.delete('q'); window.history.replaceState(null, '', url);
+ input.value = question; void ask(question);
+} else {
+ const pool = [
+  'tell me something cool about tristan.', 'what is tristan obsessed with right now?',
+  'what should i talk to tristan about?', 'what kind of things does tristan like to do?',
+  "what's the weirdest thing he's built?", 'why did he shut down his startup?',
+  "what's the story behind thenetwork labs?", 'what is people exchange?',
+  'is tristan more physics or software?', "what's a hypothetical startup would tristan build?",
+  'what kind of problems get his attention?', "what does he do when he's not building things?",
+  "what's something tristan has failed at?", 'what is he learning right now?',
+  'what would make tristan reply to an email?', 'what kind of role would fit tristan?',
+  'should i hire tristan?', "what's unusual about his background?", 'what does he do outside of tech?', 'who are you?',
+ ];
+ for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+ for (const question of pool.slice(0, 3)) {
+   const button = document.createElement('button'); button.type = 'button'; button.textContent = question;
+   button.addEventListener('click', () => { void ask(question); input.focus(); }); suggestions.append(button);
+ }
 }
 window.addEventListener('pagehide', () => current?.abort());
 </script>
