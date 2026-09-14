@@ -20,19 +20,18 @@
   #command-status{padding-left:12px;padding-right:12px;flex-shrink:0;overflow-wrap:anywhere}
 }
 
-/* Ask: a small text viewport, with the transcript slipping under the composer. */
-#ask-viewport{max-height:min(52svh,540px);overflow-y:auto;scrollbar-width:none;scroll-padding-top:80px;overscroll-behavior:contain}
-#ask-viewport::-webkit-scrollbar{display:none}
-#ask-viewport #ask-form{position:sticky;top:0;z-index:2;background:var(--bg)}
-#ask-viewport #answer:not(:empty){border-top:0;margin-top:0;padding-top:16px;font-size:15px}
+/* Only the transcript scrolls; the composer and starters stay in normal layout. */
+#ask-transcript{height:0;overflow-y:auto;scrollbar-width:none;overscroll-behavior:contain;overflow-anchor:none}
+#ask-transcript::-webkit-scrollbar{display:none}
+#ask-transcript.has-conversation{height:min(50svh,520px)}
+#ask-transcript #answer:not(:empty){border-top:0;margin-top:0;padding-top:16px;font-size:15px}
 .ask-exchange{margin-bottom:26px;overflow-wrap:anywhere}
 .ask-exchange .answer-question{margin-bottom:8px}
-.ask-response{white-space:pre-wrap;margin-bottom:0;min-height:1.65em}
+.ask-response{white-space:pre-wrap;margin-bottom:0;min-height:1.65em;line-height:1.8}
+.ask-response a{text-decoration:none;color:inherit}
+.ask-response a:hover{color:var(--accent)}
+.ask-response a::after{content:'↗';margin-left:.25em;font-size:.8em;color:var(--muted);display:inline-block}
 .ask-failure{font-size:12px;color:var(--muted)}
 .ask-waiting::after{content:'';display:inline-block;width:1px;height:1em;background:var(--muted);vertical-align:-.1em;animation:ask-caret 1s steps(1,end) infinite}
 @keyframes ask-caret{50%{opacity:0}}
-@media(max-width:600px){#ask-viewport{max-height:min(56dvh,540px)}}
-
-#ask-viewport.has-conversation{height:min(55svh,560px);max-height:none;overflow-anchor:none}
-.ask-response{line-height:1.8}
-@media(max-width:600px){#ask-viewport.has-conversation{height:min(55dvh,560px)}}
+@media(max-width:600px){#ask-transcript.has-conversation{height:min(52dvh,520px)}}

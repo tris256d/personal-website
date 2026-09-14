@@ -3,10 +3,10 @@ import Layout from '../layouts/Layout.astro';
 ---
 <Layout title="Ask">
  <h1>Ask</h1>
- <section id="ask-viewport" tabindex="0" aria-label="Ask conversation">
+ <section id="ask">
   <form id="ask-form"><label for="question" class="sr-only">Your question</label><span aria-hidden="true">❯</span><input id="question" name="question" placeholder="ask something..." autocomplete="off" maxlength="400" required /><button type="submit" aria-label="Ask question">↵</button></form>
   <div class="suggestions" aria-label="Suggested questions"></div>
-  <div id="answer" role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions text"></div>
+  <div id="ask-transcript" tabindex="0" role="region" aria-label="Ask conversation"><div id="answer" role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions text"></div></div>
  </section>
  <noscript><p>Enable JavaScript to ask a question, or explore <a href="/about">About</a>, <a href="/projects">Projects</a>, and <a href="/now">Now</a>.</p></noscript>
 </Layout>
@@ -17,7 +17,7 @@ const messages: Message[] = [];
 const sessionId = crypto.randomUUID();
 const form = document.querySelector<HTMLFormElement>('#ask-form')!;
 const input = document.querySelector<HTMLInputElement>('#question')!;
-const viewport = document.querySelector<HTMLElement>('#ask-viewport')!;
+const viewport = document.querySelector<HTMLElement>('#ask-transcript')!;
 const output = document.querySelector<HTMLDivElement>('#answer')!;
 const suggestions = document.querySelector<HTMLDivElement>('.suggestions')!;
 let current: AbortController | undefined;
@@ -54,6 +54,25 @@ viewport.addEventListener('touchmove', event => {
 viewport.addEventListener('keydown', event => {
  if (event.target === viewport && ['ArrowUp', 'PageUp', 'Home'].includes(event.key)) follow = false;
 });
+function renderSafeText(container: HTMLElement, text: string) {
+ const contacts = new Map([
+   ['tristan.dehalleux@columbia.edu', 'mailto:tristan.dehalleux@columbia.edu'],
+   ['https://github.com/tris256d', 'https://github.com/tris256d'],
+   ['https://www.linkedin.com/in/tristan-dehalleux', 'https://www.linkedin.com/in/tristan-dehalleux'],
+ ]);
+ const pattern = /tristan\.dehalleux@columbia\.edu|https:\/\/github\.com\/tris256d|https:\/\/www\.linkedin\.com\/in\/tristan-dehalleux/g;
+ const fragment = document.createDocumentFragment();
+ let offset = 0;
+ for (const match of text.matchAll(pattern)) {
+   fragment.append(document.createTextNode(text.slice(offset, match.index)));
+   const link = document.createElement('a');
+   link.textContent = match[0]; link.href = contacts.get(match[0])!;
+   if (!link.href.startsWith('mailto:')) { link.target = '_blank'; link.rel = 'noopener noreferrer'; }
+   fragment.append(link); offset = match.index! + match[0].length;
+ }
+ fragment.append(document.createTextNode(text.slice(offset)));
+ container.replaceChildren(fragment);
+}
 async function ask(raw: string) {
  const question = raw.trim();
  if (!question || question.length > 400) { input.reportValidity(); return; }
@@ -82,6 +101,7 @@ async function ask(raw: string) {
      if (event.type === 'response.completed') {
        complete = true;
        if (answer.trim()) {
+         renderSafeText(paragraph, answer);
          messages.push({ role: 'user', content: question }, { role: 'assistant', content: answer });
          pending = undefined;
          while (messages.length > 16) {
