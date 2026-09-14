@@ -35,3 +35,17 @@
 .ask-waiting::after{content:'';display:inline-block;width:1px;height:1em;background:var(--muted);vertical-align:-.1em;animation:ask-caret 1s steps(1,end) infinite}
 @keyframes ask-caret{50%{opacity:0}}
 @media(max-width:600px){#ask-transcript.has-conversation{height:min(52dvh,520px)}}
+
+@media(max-width:600px), (max-width:950px) and (pointer:coarse){
+ html,body{scrollbar-width:none}
+ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
+ .shell{padding-left:max(25px,env(safe-area-inset-left));padding-right:max(25px,env(safe-area-inset-right))}
+ header{position:sticky;top:0;z-index:5;background:var(--bg);padding-top:calc(16px + env(safe-area-inset-top));padding-bottom:12px}
+ header::after{content:'';position:absolute;top:100%;left:0;right:0;height:18px;background:linear-gradient(var(--bg),transparent);pointer-events:none}
+ footer{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+ #ask-transcript{scroll-padding-block:14px 28px}
+ #ask-transcript.has-conversation{padding-bottom:calc(28px + env(safe-area-inset-bottom));mask-image:linear-gradient(to bottom,transparent,black 6px,black calc(100% - 8px),transparent)}
+ #palette{max-height:calc(var(--mobile-viewport-height,100dvh) - 32px);margin-top:16px}
+ #palette[open]{display:flex;flex-direction:column}
+ #command-results{min-height:0;overflow-y:auto}
+}

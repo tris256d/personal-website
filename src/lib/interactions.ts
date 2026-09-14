@@ -12,8 +12,11 @@ let returnFocus:HTMLElement|null=null;
 function closeAll(){ document.querySelectorAll<HTMLDialogElement>('dialog[open]').forEach(d=>d.close()); }
 function open(dialog:HTMLDialogElement){
  if(!document.querySelector('dialog[open]')) returnFocus=document.activeElement as HTMLElement;
+ const touch = matchMedia('(pointer: coarse)').matches;
+ if(dialog===palette && touch) search.disabled=true;
  closeAll();dialog.showModal();
- if(dialog===palette){search.value='';status.textContent='';active=0;render();search.focus();}
+ if(dialog===palette && touch) { search.disabled=false; palette.focus({preventScroll:true}); }
+ if(dialog===palette){search.value='';status.textContent='';active=0;render();if(!touch)search.focus();}
  if(dialog===terminal) document.querySelector<HTMLInputElement>('#terminal-input')!.focus();
 }
 document.querySelectorAll<HTMLDialogElement>('dialog').forEach(d=>{
@@ -25,8 +28,10 @@ document.querySelector('[data-open=palette]')?.addEventListener('click',()=>open
 async function run(command:Command){
  if(command.href){location.href=command.href;return;}
  if(command.action==='help'){open(help);return;}
- if(command.action==='light'||command.action==='dark'){
- const theme=command.action;document.documentElement.dataset.theme=theme;try{localStorage.setItem('theme',theme);}catch{}
+ if(command.action==='light'||command.action==='dark'||command.action==='system'){
+ const theme=command.action;try{if(theme==='system')localStorage.removeItem('theme');else localStorage.setItem('theme',theme);}catch{}
+ document.documentElement.dataset.theme=theme==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):theme;
+ window.dispatchEvent(new Event('site-theme'));
  status.textContent=`Switched to ${theme} theme.`;return;
  }
  if(command.action==='email'&&data.email){try{await navigator.clipboard.writeText(data.email);status.textContent='Email copied.';}catch{status.textContent=data.email;}return;}
@@ -87,3 +92,10 @@ time.addEventListener('click', () => {
    location.href = '/visualizer';
  }
 });
+
+function mobilePaletteHeight(){
+ if(matchMedia('(max-width: 600px), (max-width: 950px) and (pointer: coarse)').matches) {
+  document.documentElement.style.setProperty('--mobile-viewport-height', `${window.visualViewport?.height || innerHeight}px`);
+ }
+}
+mobilePaletteHeight(); window.visualViewport?.addEventListener('resize', mobilePaletteHeight);

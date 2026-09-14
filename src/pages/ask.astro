@@ -76,6 +76,7 @@ function renderSafeText(container: HTMLElement, text: string) {
 async function ask(raw: string) {
  const question = raw.trim();
  if (!question || question.length > 400) { input.reportValidity(); return; }
+ if(matchMedia('(pointer: coarse)').matches) input.blur();
  current?.abort();
  pending?.remove(); // Discard the whole unfinished exchange, never half a history pair.
  suggestions.remove();
@@ -148,7 +149,7 @@ if (question) {
  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
  for (const question of pool.slice(0, 3)) {
    const button = document.createElement('button'); button.type = 'button'; button.textContent = question;
-   button.addEventListener('click', () => { void ask(question); input.focus(); }); suggestions.append(button);
+   button.addEventListener('click', () => { void ask(question); if(!matchMedia('(pointer: coarse)').matches) input.focus(); }); suggestions.append(button);
  }
 }
 window.addEventListener('pagehide', () => current?.abort());

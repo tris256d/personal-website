@@ -15,6 +15,7 @@ const commands = [
  { label:'LinkedIn', ...(site.linkedin ? { href:site.linkedin } : { action:'unavailable' }), detail:site.linkedin ? 'Elsewhere' : 'Not added yet' },
  { label:'Light mode', action:'light', detail:'Appearance' },
  { label:'Dark mode', action:'dark', detail:'Appearance' },
+ { label:'System mode', action:'system', detail:'Appearance' },
  { label:'Source', href:site.source, detail:'Repository' },
  { label:'RSS', href:'/rss.xml', detail:'Notes feed' },
  ...(hash ? [{ label:'Current build / commit', href:`${site.source}/commit/${process.env.COMMIT_REF || hash}`, detail:hash }] : []),
@@ -26,12 +27,23 @@ const commands = [
 <!doctype html>
 <html lang="en" data-theme="light">
 <head>
-<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>{title ? `${title} — ${site.name}` : site.name}</title>
 <meta name="description" content={description} /><link rel="canonical" href={new URL(Astro.url.pathname, site.url)} />
 <meta property="og:title" content={title ? `${title} — ${site.name}` : site.name} /><meta property="og:description" content={description} /><meta property="og:type" content="website" /><meta property="og:url" content={new URL(Astro.url.pathname, site.url)} /><meta property="og:image" content={new URL('/og.png', site.url)} /><meta name="theme-color" content="#f6f5f1" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" /><link rel="alternate" type="application/rss+xml" title="Tristan’s notes" href="/rss.xml" />
-<script is:inline>try { const t = localStorage.getItem('theme'); if(t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch {}</script>
+<script is:inline>
+(() => {
+ const system = matchMedia('(prefers-color-scheme: dark)');
+ const apply = () => {
+  let saved; try { saved = localStorage.getItem('theme'); } catch {}
+  const theme = saved === 'light' || saved === 'dark' ? saved : system.matches ? 'dark' : 'light';
+  document.documentElement.dataset.theme = theme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#1c1d1b' : '#f6f5f1');
+ };
+ apply(); system.addEventListener('change', apply); window.addEventListener('site-theme', apply);
+})();
+</script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -40,7 +52,7 @@ const commands = [
 <main id="main" tabindex="-1"><slot /></main>
 <footer><button class="launcher" data-open="palette" aria-label="Open command palette">⌘ K</button><time id="nyc-time" data-timezone={site.timezone} aria-label="Current New York time">NYC · --:--</time></footer>
 </div>
-<dialog id="palette" aria-label="Command palette"><div class="dialog-top"><input id="command-search" type="search" placeholder="Where would you like to go?" autocomplete="off" aria-label="Search commands" aria-controls="command-results" /><button data-close aria-label="Close command palette">esc</button></div><div id="command-results" role="group" aria-label="Commands"></div><p class="dialog-hint">↑ ↓ to move <span>↵ to open</span></p><p id="command-status" role="status"></p></dialog>
+<dialog id="palette" tabindex="-1" aria-label="Command palette"><div class="dialog-top"><input id="command-search" type="search" placeholder="Where would you like to go?" autocomplete="off" aria-label="Search commands" aria-controls="command-results" /><button data-close aria-label="Close command palette">esc</button></div><div id="command-results" role="group" aria-label="Commands"></div><p class="dialog-hint">↑ ↓ to move <span>↵ to open</span></p><p id="command-status" role="status"></p></dialog>
 <dialog id="shortcuts" aria-labelledby="shortcuts-title"><div class="dialog-top"><h2 id="shortcuts-title">A few shortcuts</h2><button data-close aria-label="Close shortcuts">esc</button></div><dl class="shortcuts"><div><dt>Open command palette</dt><dd><kbd>⌘ / Ctrl K</kbd></dd></div>{[['About','a'],['Projects','p'],['Notes','n'],['Ask','/'],['This reference','?'],['Close a dialog','Esc']].map(([label,key]) => <div><dt>{label}</dt><dd><kbd>{key}</kbd></dd></div>)}</dl></dialog>
 <dialog id="terminal" aria-label="Small terminal"><div class="dialog-top"><span>~/tristan</span><button data-close aria-label="Close terminal">esc</button></div><div id="terminal-output" role="log">A small door. Type help.</div><form id="terminal-form"><label for="terminal-input">❯</label><input id="terminal-input" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal command" /></form></dialog>
 <script id="site-data" type="application/json" set:html={JSON.stringify({ commands, email:site.email, name:site.name, projects:projects.map(p=>p.title) }).replace(/</g,'\u003c')} />
