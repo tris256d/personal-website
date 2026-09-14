@@ -24,7 +24,7 @@ npm run preview
 - Public Ask knowledge: `src/data/publicProfile.ts` (manually curated; never import private data)
 - Ask suggestions: `src/pages/ask.astro`
 
-The homepage and bio use the supplied structural placeholder (including Columbia); replace or confirm these details. The initial text is starter copy, and the second project is explicitly a placeholder. Email and LinkedIn are blank until supplied. The live URL is https://tristan-de-halleux.netlify.app. Update `site.url` when connecting a custom domain; it controls canonical URLs, social metadata, RSS, and sitemap.
+The homepage and bio use the supplied structural placeholder (including Columbia); replace or confirm these details. The initial text is starter copy, and the second project is explicitly a placeholder. Email and LinkedIn are blank until supplied. The live URL is https://tristandh.com. Update `site.url` when connecting a custom domain; it controls canonical URLs, social metadata, RSS, and sitemap.
 
 ## Deployment
 
