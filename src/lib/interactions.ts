@@ -99,3 +99,19 @@ function mobilePaletteHeight(){
  }
 }
 mobilePaletteHeight(); window.visualViewport?.addEventListener('resize', mobilePaletteHeight);
+
+// The fixed mobile safe-area shield follows the real header, without scroll polling.
+const mobileHeaderQuery = matchMedia('(max-width:600px), (max-width:950px) and (pointer:coarse)');
+const siteHeader = document.querySelector<HTMLElement>('header');
+const headerObserver = new ResizeObserver(() => measureMobileHeader());
+function measureMobileHeader() {
+ if (mobileHeaderQuery.matches && siteHeader) {
+  document.documentElement.style.setProperty('--mobile-header-height', `${siteHeader.getBoundingClientRect().height}px`);
+ }
+}
+function observeMobileHeader() {
+ headerObserver.disconnect();
+ if (mobileHeaderQuery.matches && siteHeader) { measureMobileHeader(); headerObserver.observe(siteHeader); }
+}
+mobileHeaderQuery.addEventListener('change', observeMobileHeader);
+observeMobileHeader();

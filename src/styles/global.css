@@ -37,7 +37,7 @@
 @media(max-width:600px){#ask-transcript.has-conversation{height:min(52dvh,520px)}}
 
 @media(max-width:600px), (max-width:950px) and (pointer:coarse){
- html,body{scrollbar-width:none}
+ html,body{scrollbar-width:none;background:var(--bg)}
  html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}
  .shell{padding-left:max(25px,env(safe-area-inset-left));padding-right:max(25px,env(safe-area-inset-right))}
  header{position:sticky;top:0;z-index:5;background:var(--bg);padding-top:calc(16px + env(safe-area-inset-top));padding-bottom:12px}
@@ -52,7 +52,7 @@
 
 .ask-chrome{display:contents}
 @media(max-width:600px), (max-width:950px) and (pointer:coarse){
- header::before{content:'';position:absolute;inset:auto calc(-1 * max(25px,env(safe-area-inset-right))) 0 calc(-1 * max(25px,env(safe-area-inset-left)));height:calc(100% + 100svh);background:var(--bg);z-index:-1;pointer-events:none}
+ body::before{content:'';position:fixed;z-index:4;top:0;left:0;right:0;height:var(--mobile-header-height,env(safe-area-inset-top));background:var(--bg);pointer-events:none}
  #palette:focus,#palette:focus-visible{outline:none}
  #palette .dialog-top button[data-close]{font-size:0}
  #palette .dialog-top button[data-close]::after{content:'×';font-size:24px;line-height:1}

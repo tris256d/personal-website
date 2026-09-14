@@ -216,8 +216,6 @@ if (!token) {
         if (!mobileMap()) return;
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
-          const height = window.visualViewport?.height || innerHeight;
-          document.documentElement.style.setProperty('--map-height', `${height}px`);
           map.resize();
           if (!story.hidden && step > 0) moveToStop?.(tour[step]);
         }, 180);
@@ -334,8 +332,8 @@ if (!token) {
     #story{max-height:32dvh}
   }
   @media(max-width:600px), (max-width:950px) and (pointer:coarse){
-    html,body{height:100dvh;overflow:hidden;overscroll-behavior:none}
-    #map{position:fixed;inset:0;width:100%;height:var(--map-height,100dvh)}
+    html,body{margin:0;width:100%;height:100%;min-height:100%;overflow:hidden;overscroll-behavior:none;background:#1c1d1b}
+    #map{position:fixed;inset:0;width:100vw;height:100lvh;min-height:100dvh}
     #story{top:auto;left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));bottom:calc(80px + env(safe-area-inset-bottom));width:auto;max-height:28dvh;padding:10px 12px}
     .story-actions{margin-top:6px;gap:4px}
     .story-actions button,.map-actions a,.map-actions button,.terrain-controls button{min-height:44px;min-width:44px}
