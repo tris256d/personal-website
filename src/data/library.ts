@@ -296,9 +296,9 @@ export const library: Record<'books' | 'papers' | 'films', LibraryCategory> = {
   current: [],
   years: [
     {
-      // These are being logged in 2026; this is NOT meant to imply
-      // that every film below was watched in 2026.
-      year: 2026,
+      // These are being logged as Prev; this is  meant to imply
+      // that every film below was watched before the website was created.
+      year: Prev,
       items: [
         {
           title: 'Blade Runner 2049 (2017)',
