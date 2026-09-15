@@ -272,6 +272,25 @@ export const library: Record<'books' | 'papers' | 'films', LibraryCategory> = {
   },
 ],
   },
-  papers: { current: [], years: [] },
+  papers: {
+  current: [],
+  years: [
+    {
+      year: 2026,
+      items: [
+        {
+          title: 'Attention Is All You Need',
+          byline: 'Vaswani et al. · 2017',
+          url: 'https://arxiv.org/abs/1706.03762',
+        },
+        {
+          title: 'Language Models are Few-Shot Learners',
+          byline: 'Brown et al. · 2020',
+          url: 'https://arxiv.org/abs/2005.14165',
+        },
+      ],
+    },
+  ],
+},
   films: { current: [], years: [] },
 };
