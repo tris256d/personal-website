@@ -9,7 +9,7 @@ const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
 let hash = process.env.COMMIT_REF?.slice(0,7) || '';
 try { if (!hash) hash = execSync('git rev-parse --short HEAD').toString().trim(); } catch {}
 const commands = [
- ...['About','Projects','Notes','Ask','Now','Readings'].map(label => ({ label, href: '/' + label.toLowerCase(), detail: 'Page' })),
+ ...['About','Projects','Notes','Ask','Now','Library'].map(label => ({ label, href: '/' + label.toLowerCase(), detail: 'Page' })),
  { label:'Copy email', action:'email', detail: site.email ? 'Clipboard' : 'Not added yet' },
  { label:'GitHub', href:site.github, detail:'Elsewhere' },
  { label:'LinkedIn', ...(site.linkedin ? { href:site.linkedin } : { action:'unavailable' }), detail:site.linkedin ? 'Elsewhere' : 'Not added yet' },

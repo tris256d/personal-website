@@ -1,102 +1,100 @@
 /**
- * Add a book by copying { title: "Book title", author: 'Author' } into an items array.
- * Optionally add url: 'https://...' inside the same braces.
- *
- * Keep books in currentReading while reading; move finished books into readings:
- * { year: 2026, items: [{ title: "Book title", author: 'Author' }] },
- *
- * Years display newest first; books stay in the order you enter them.
+ * Add { title: 'Title', byline: 'Author / creator' } to current or a year's items.
+ * score: optional 0–10 rating; omitted means unrated, not a low rating.
+ * thought: optional short personal impression.
+ * noteSlug: optional slug for a longer piece at /notes/<slug>.
+ * url: optional external book, paper, film or source link.
+ * Years display newest first; items keep your order.
  */
-
-export type ReadingItem = {
+export type LibraryItem = {
   title: string;
-  author: string;
+  byline: string;
   url?: string;
+  score?: number;
+  thought?: string;
+  noteSlug?: string;
 };
-
-export type ReadingYear = {
-  year: number;
-  items: ReadingItem[];
-};
-
-export const currentReading: ReadingItem[] = [
+export type LibraryYear = { year: number; items: LibraryItem[] };
+export type LibraryCategory = { current: LibraryItem[]; years: LibraryYear[] };
+export const library: Record<'books' | 'papers' | 'films', LibraryCategory> = {
+  books: {
+    current: [
   {
     title: 'Dune (Book 6)',
-    author: 'Frank Herbert',
+    byline: 'Frank Herbert',
   },
   {
     title: 'Nicomachean Ethics and Politics',
-    author: 'Aristotle',
+    byline: 'Aristotle',
   },
-];
-
-export const readings: ReadingYear[] = [
+],
+    years: [
   {
     year: 2026,
     items: [
       {
         title: "Republic",
-        author: 'Plato',
+        byline: 'Plato',
       },
       {
         title: 'Dune (Books 2–5)',
-        author: 'Frank Herbert',
+        byline: 'Frank Herbert',
       },
       {
         title: 'Excellent Sheep',
-        author: 'William Deresiewicz',
+        byline: 'William Deresiewicz',
       },
       {
         title: 'Zero to One',
-        author: 'Peter Thiel',
+        byline: 'Peter Thiel',
       },
       {
         title: 'Enter Ghost',
-        author: 'Isabella Hammad',
+        byline: 'Isabella Hammad',
       },
       {
         title: 'Song of Solomon',
-        author: 'Toni Morrison',
+        byline: 'Toni Morrison',
       },
       {
         title: 'To the Lighthouse',
-        author: 'Virginia Woolf',
+        byline: 'Virginia Woolf',
       },
       {
         title: 'Crime and Punishment',
-        author: 'Fyodor Dostoevsky',
+        byline: 'Fyodor Dostoevsky',
       },
       {
         title: 'Pride and Prejudice',
-        author: 'Jane Austen',
+        byline: 'Jane Austen',
       },
       {
         title: 'Selected Works',
-        author: 'Sor Juana Inés de la Cruz',
+        byline: 'Sor Juana Inés de la Cruz',
       },
       {
         title: 'Hamlet',
-        author: 'William Shakespeare',
+        byline: 'William Shakespeare',
       },
       {
         title: 'Selections from The Complete Essays of Montaigne',
-        author: 'Michel de Montaigne',
+        byline: 'Michel de Montaigne',
       },
       {
         title: 'Inferno',
-        author: 'Dante Alighieri',
+        byline: 'Dante Alighieri',
       },
       {
         title: 'The Translator of Desires: Poems',
-        author: 'Ibn ‘Arabi',
+        byline: 'Ibn ‘Arabi',
       },
       {
         title: 'Confessions',
-        author: 'Augustine',
+        byline: 'Augustine',
       },
       {
         title: 'Citizen: An American Lyric',
-        author: 'Claudia Rankine',
+        byline: 'Claudia Rankine',
       },
     ],
   },
@@ -106,71 +104,71 @@ export const readings: ReadingYear[] = [
     items: [
       {
         title: 'Father Comes Home from the Wars',
-        author: 'Suzan-Lori Parks',
+        byline: 'Suzan-Lori Parks',
       },
       {
         title: 'Gospel of John',
-        author: 'New Testament',
+        byline: 'New Testament',
       },
       {
         title: 'Gospel of Luke',
-        author: 'New Testament',
+        byline: 'New Testament',
       },
       {
         title: 'Aeneid',
-        author: 'Virgil',
+        byline: 'Virgil',
       },
       {
         title: 'Symposium',
-        author: 'Plato',
+        byline: 'Plato',
       },
       {
         title: 'Oresteia',
-        author: 'Aeschylus',
+        byline: 'Aeschylus',
       },
       {
         title: 'Odyssey',
-        author: 'Homer',
+        byline: 'Homer',
       },
       {
         title: 'If Not, Winter: Fragments of Sappho',
-        author: 'Sappho',
+        byline: 'Sappho',
       },
       {
         title: 'Iliad',
-        author: 'Homer',
+        byline: 'Homer',
       },
       {
         title: 'Genesis',
-        author: '',
+        byline: '',
       },
       {
         title: 'Gilgamesh',
-        author: '',
+        byline: '',
       },
       {
         title: 'The Exaltation of Inana',
-        author: 'Enheduana',
+        byline: 'Enheduana',
       },
       {
         title: 'The Art of Seduction',
-        author: 'Robert Greene',
+        byline: 'Robert Greene',
       },
       {
         title: 'Chronicle of a Death Foretold',
-        author: 'Gabriel García Márquez',
+        byline: 'Gabriel García Márquez',
       },
       {
         title: 'La Grève des bàttu',
-        author: 'Aminata Sow Fall',
+        byline: 'Aminata Sow Fall',
       },
       {
         title: 'Candide',
-        author: 'Voltaire',
+        byline: 'Voltaire',
       },
       {
         title: 'Le Misanthrope',
-        author: 'Molière',
+        byline: 'Molière',
       },
     ],
   },
@@ -180,35 +178,35 @@ export const readings: ReadingYear[] = [
     items: [
       {
         title: 'Animal Farm',
-        author: 'George Orwell',
+        byline: 'George Orwell',
       },
       {
         title: 'Les Fleurs du mal',
-        author: 'Charles Baudelaire',
+        byline: 'Charles Baudelaire',
       },
       {
         title: "Meurtre sur l'Orient-Express",
-        author: 'Agatha Christie',
+        byline: 'Agatha Christie',
       },
       {
         title: 'Dune (Books 1–3)',
-        author: 'Frank Herbert',
+        byline: 'Frank Herbert',
       },
       {
         title: 'The Three-Body Problem Trilogy',
-        author: 'Cixin Liu',
+        byline: 'Cixin Liu',
       },
       {
         title: 'Random',
-        author: 'Andy Weir',
+        byline: 'Andy Weir',
       },
       {
         title: 'The Circle',
-        author: 'Dave Eggers',
+        byline: 'Dave Eggers',
       },
       {
         title: 'Ready Player Two',
-        author: 'Ernest Cline',
+        byline: 'Ernest Cline',
       },
     ],
   },
@@ -218,47 +216,47 @@ export const readings: ReadingYear[] = [
     items: [
       {
         title: 'Ready Player One',
-        author: 'Ernest Cline',
+        byline: 'Ernest Cline',
       },
       {
         title: 'Snow Crash',
-        author: 'Neal Stephenson',
+        byline: 'Neal Stephenson',
       },
       {
         title: 'Brave New World',
-        author: 'Aldous Huxley',
+        byline: 'Aldous Huxley',
       },
       {
         title: 'Scythe Trilogy',
-        author: 'Neal Shusterman',
+        byline: 'Neal Shusterman',
       },
       {
         title: 'Dry',
-        author: 'Neal Shusterman',
+        byline: 'Neal Shusterman',
       },
       {
         title: 'Project Hail Mary',
-        author: 'Andy Weir',
+        byline: 'Andy Weir',
       },
       {
         title: 'The Martian',
-        author: 'Andy Weir',
+        byline: 'Andy Weir',
       },
       {
         title: 'Artemis',
-        author: 'Andy Weir',
+        byline: 'Andy Weir',
       },
       {
         title: 'Lord of the Flies',
-        author: 'William Golding',
+        byline: 'William Golding',
       },
       {
         title: 'The Chronicles of Narnia',
-        author: 'C. S. Lewis',
+        byline: 'C. S. Lewis',
       },
       {
         title: 'White Fang',
-        author: 'Jack London',
+        byline: 'Jack London',
       },
     ],
   },
@@ -268,8 +266,12 @@ export const readings: ReadingYear[] = [
     items: [
       {
         title: 'The Way Things Work',
-        author: 'David Macaulay',
+        byline: 'David Macaulay',
       },
     ],
   },
-];
+],
+  },
+  papers: { current: [], years: [] },
+  films: { current: [], years: [] },
+};

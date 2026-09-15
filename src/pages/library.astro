@@ -1,0 +1,92 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { library } from '../data/library';
+const categories = Object.entries(library).map(([key, category]) => ({
+  key, label: key[0].toUpperCase() + key.slice(1),
+  sections: [
+    ...(category.current.length ? [{ label: key === 'films' ? 'Recent' : 'Now', items: category.current }] : []),
+    ...[...category.years].sort((a, b) => b.year - a.year).filter(year => year.items.length)
+      .map(year => ({ label: String(year.year), items: year.items })),
+  ],
+}));
+---
+<Layout title="Library">
+  <h1>Library</h1>
+  <div class="library-tabs" role="tablist" aria-label="Library categories">
+    {categories.map(({ key, label }) => <a id={`tab-${key}`} href={`#${key}`} role="tab" aria-controls={key} aria-selected={key === 'books'} tabindex={key === 'books' ? 0 : -1}>{label}</a>)}
+  </div>
+  {categories.map(({ key, sections }) => (
+    <div class="library-log" id={key} role="tabpanel" aria-labelledby={`tab-${key}`} tabindex="0" hidden={key !== 'books'}>
+      {!sections.length && <p class="empty">Nothing here yet.</p>}
+      {sections.map(({ label, items }, index) => (
+        <section aria-labelledby={`${key}-section-${index}`}>
+          <h2 id={`${key}-section-${index}`}>{label}</h2>
+          <ul>{items.map(({ title, byline, url, score, thought, noteSlug }) => (
+            <li>
+              <div class="reading-row">
+                <cite>{url ? <a href={url} target="_blank" rel="noopener noreferrer">{title}<span aria-hidden="true"> ↗</span></a> : title}</cite>
+                <span class="leader" aria-hidden="true"></span>
+                <span class="byline">{byline}</span>
+                {score !== undefined && <span class="score">{score}/10</span>}
+              </div>
+              {thought && <p class="thought">{thought}</p>}
+              {noteSlug && <a class="note-link" href={`/notes/${noteSlug}`}>note ↗</a>}
+            </li>
+          ))}</ul>
+        </section>
+      ))}
+    </div>
+  ))}
+</Layout>
+<script>
+const tabs = [...document.querySelectorAll<HTMLAnchorElement>('.library-tabs [role="tab"]')];
+function selectCategory() {
+  const key = ['books', 'papers', 'films'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'books';
+  tabs.forEach(tab => {
+    const selected = tab.hash === `#${key}`;
+    tab.setAttribute('aria-selected', String(selected)); tab.tabIndex = selected ? 0 : -1;
+    document.getElementById(tab.getAttribute('aria-controls')!)!.hidden = !selected;
+  });
+}
+function activate(tab: HTMLAnchorElement) {
+  if (location.hash !== tab.hash) history.pushState(null, '', tab.hash);
+  selectCategory();
+}
+tabs.forEach((tab, index) => {
+  tab.addEventListener('click', event => { event.preventDefault(); activate(tab); });
+  tab.addEventListener('keydown', event => {
+    const next = event.key === 'ArrowRight' ? (index + 1) % tabs.length : event.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : -1;
+    if (next >= 0) { event.preventDefault(); activate(tabs[next]); tabs[next].focus(); }
+  });
+});
+window.addEventListener('hashchange', selectCategory);
+window.addEventListener('popstate', selectCategory);
+selectCategory();
+</script>
+<style>
+.library-tabs{display:flex;gap:24px;margin-bottom:28px;font-size:13px;color:var(--muted)}
+.library-tabs a{display:inline-flex;align-items:center;min-height:44px}
+.library-tabs [aria-selected=true]{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:8px}
+.library-log[hidden]{display:none}
+.library-log section+section{margin-top:34px}
+.library-log h2{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted);margin:0 0 14px}
+.library-log ul{list-style:none;margin:0;padding:0}
+.library-log li{padding:8px 0;font-size:15px}
+.reading-row{display:flex;align-items:baseline;gap:14px}
+cite{min-width:0;max-width:65%;font-weight:400;overflow-wrap:anywhere}
+.leader{flex:1;min-width:16px;border-bottom:1px solid var(--line);align-self:center}
+.byline{min-width:0;max-width:40%;text-align:right;color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.score{white-space:nowrap;font:11px ui-monospace,monospace;color:var(--muted)}
+cite a,.note-link{text-decoration:none}
+cite a span{font-size:11px;font-style:normal;color:var(--muted)}
+.thought,.empty{font-size:13px;color:var(--muted)}
+.thought{margin:6px 0 0;overflow-wrap:anywhere}
+.note-link{display:inline-block;font-size:11px;color:var(--muted);padding:6px 0}
+@media(max-width:600px){
+ .reading-row{gap:10px;flex-wrap:wrap}
+ cite{max-width:100%;flex:0 1 auto}
+ .byline{max-width:100%;margin-left:auto;flex:0 1 auto}
+ .leader{min-width:8px}
+}
+@media(max-width:360px){.leader{display:none}.reading-row{column-gap:16px}cite{flex-basis:100%}}
+</style>
