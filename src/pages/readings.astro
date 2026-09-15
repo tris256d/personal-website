@@ -1,0 +1,47 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { currentReading, readings } from '../data/readings';
+const sections = [
+  ...(currentReading.length ? [{ label: 'Now', items: currentReading }] : []),
+  ...[...readings].sort((a, b) => b.year - a.year)
+    .filter(({ items }) => items.length)
+    .map(({ year, items }) => ({ label: String(year), items })),
+];
+---
+<Layout title="Readings">
+  <h1>Readings</h1>
+  <div class="reading-log">
+    {sections.map(({ label, items }, index) => (
+      <section aria-labelledby={`reading-section-${index}`}>
+        <h2 id={`reading-section-${index}`}>{label}</h2>
+        <ul>
+          {items.map(({ title, author, url }) => (
+            <li>
+              <cite>{url ? <a href={url} target="_blank" rel="noopener noreferrer">{title}<span aria-hidden="true"> ↗</span></a> : title}</cite>
+              <span class="leader" aria-hidden="true"></span>
+              <span class="author">{author}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </div>
+</Layout>
+<style>
+  .reading-log section + section{margin-top:34px}
+  .reading-log h2{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted);margin:0 0 14px}
+  .reading-log ul{list-style:none;margin:0;padding:0}
+  .reading-log li{display:flex;align-items:baseline;gap:14px;padding:8px 0;font-size:15px}
+  cite{min-width:0;max-width:65%;font-weight:400;overflow-wrap:anywhere}
+  .leader{flex:1;min-width:16px;border-bottom:1px solid var(--line);align-self:center}
+  .author{min-width:0;max-width:40%;text-align:right;color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+  cite a{text-decoration:none}
+  cite a span{font-size:11px;font-style:normal;color:var(--muted)}
+  @media(max-width:600px){
+    .reading-log li{gap:10px;flex-wrap:wrap}
+    cite{max-width:100%;flex:0 1 auto}
+    .author{max-width:100%;margin-left:auto;flex:0 1 auto}
+    .leader{min-width:8px}
+  }
+  @media(max-width:360px){.leader{display:none}.reading-log li{column-gap:16px}}
+</style>
