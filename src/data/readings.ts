@@ -25,14 +25,8 @@ export const currentReading: ReadingItem[] = [
     author: 'Frank Herbert',
   },
   {
-    title: 'Nicomachean Ethics',
+    title: 'Nicomachean Ethics and Politics',
     author: 'Aristotle',
-    url: 'https://en.wikipedia.org/wiki/Nicomachean_Ethics',
-  },
-  {
-    title: 'Politics',
-    author: 'Aristotle',
-    url: 'https://iep.utm.edu/aristotle-politics/',
   },
 ];
 
@@ -41,7 +35,7 @@ export const readings: ReadingYear[] = [
     year: 2026,
     items: [
       {
-        title: "Plato's Republic",
+        title: "Republic",
         author: 'Plato',
       },
       {
@@ -55,7 +49,6 @@ export const readings: ReadingYear[] = [
       {
         title: 'Zero to One',
         author: 'Peter Thiel',
-        url: 'https://sfpl.bibliocommons.com/v2/record/S93C2777776',
       },
       {
         title: 'Enter Ghost',
@@ -117,11 +110,11 @@ export const readings: ReadingYear[] = [
       },
       {
         title: 'Gospel of John',
-        author: 'Anonymous / New Testament',
+        author: 'New Testament',
       },
       {
         title: 'Gospel of Luke',
-        author: 'Anonymous / New Testament',
+        author: 'New Testament',
       },
       {
         title: 'Aeneid',
@@ -149,11 +142,11 @@ export const readings: ReadingYear[] = [
       },
       {
         title: 'Genesis',
-        author: 'Anonymous / Hebrew Bible',
+        author: '',
       },
       {
         title: 'Gilgamesh',
-        author: 'Anonymous',
+        author: '',
       },
       {
         title: 'The Exaltation of Inana',
