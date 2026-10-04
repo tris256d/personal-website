@@ -1,0 +1,164 @@
+---
+import Layout from '../../layouts/Layout.astro';
+const description = 'A private operating system I built to centralize the different systems of my life.';
+const assets = '/projects/dash/';
+const sources = [
+  ['Capture', 'Web capture · Telegram / voice'],
+  ['Calendar', 'Google Calendar'],
+  ['Health', 'Apple Health · Strava / Hevy imports'],
+  ['Finance', 'Plaid · local/private imports'],
+];
+const domains = [
+  ['Capture / CRM', 'Captures → classification / extraction → confidence / Review → tasks, people, goals, decisions, links'],
+  ['Health', 'Ingestion → sample normalization / reconciliation → raw / canonical samples → rollups / daily projections'],
+  ['Calendar', 'Incremental sync → cached calendar state → contextual read models'],
+  ['Finance · protected', 'Finance module → reconciliation → deterministic balances, liabilities, utilization, investments'],
+];
+const metrics = [['~20','calendars'],['1 min','initial cadence'],['100','runs / 6 hours'],['99','timeouts'],['~83%','scheduled runtime'],['~47.6M','event updates'],['~4.3K','live rows']];
+const captureFlow = ['capture','classify','extract','confidence','task state','rank','queue'];
+const memoryFlow = ['canonical state','sanitized memory chunks','embeddings','pgvector','similarity search','cited answer'];
+const incidentFlow = ['Google quota looked safe','poll every minute','overlapping jobs','repeated DB writes','CPU / I/O saturation','stop + recover + slow down'];
+const contract = ['source identity','idempotency','event / update / snapshot','normalization','reconciliation','provenance','failure state'];
+---
+<Layout title="Dash" description={description}>
+  <a class="back" href="/projects">← Projects</a>
+  <article class="dash">
+    <div class="intro reading">
+      <p class="eyebrow">PROJECT / 2026</p>
+      <h1>Dash</h1>
+      <p class="lead">{description}</p>
+      <p>Dash started because I wanted a finance dashboard across all my bank accounts. Three weeks later I had voice input, task management, calendar sync, health ingestion, semantic memory, agentic review queues and 24/7 background jobs.</p>
+      <a class="archive" href="https://dash.tristandh.com">Explore Dash ↗</a>
+      <p class="caption">This version runs on synthetic data</p>
+    </div>
+    <figure class="wide hero"><img src={assets + '01-home-dark.png'} width="2940" height="1912" fetchpriority="high" alt="Dash Home in dark mode, aggregating today's tasks, calendar, health and private finance overview using synthetic data." /></figure>
+
+    <section aria-labelledby="system-title">
+      <div class="reading">
+        <p class="eyebrow">01 / THE SYSTEM</p>
+        <h2 id="system-title">One state layer for everything</h2>
+        <p>Data inputs to the system flow through server-owned adapters where they are normalized into structured records in Postgres, then they can be surfaced through Home, Tasks, Health, Finance, Review, or queried through Brain. I kept as many calculations, rankings and canonical records deterministic, with AI models being called for fuzzy inputs such as classification, embeddings, or search.</p>
+        <p class="annotation">Importantly, the models can interpret data, but not edit the original inputs.</p>
+        <p class="caption runtime-note">I started out by hosting the system and scheduled jobs in the cloud and eventually started moving the heavier workflows toward a private always-on worker.</p>
+      </div>
+      <figure class="wide architecture" aria-labelledby="architecture-caption">
+        <figcaption id="architecture-caption" class="diagram-heading"><span>System topology / data ownership</span><span>Solid: operational · dashed: later direction</span></figcaption>
+        <div class="topology">
+          <div class="main-path">
+            <div class="sources layer">{sources.map(([title, text]) => <div><h3>{title}</h3><p>{text}</p></div>)}</div>
+            <div class="connector input-connector" aria-hidden="true"><i></i><i></i><span>↓</span></div>
+            <div class="boundary layer">
+              <h3>Node server / trust boundary</h3>
+              <p>API routes · authentication · single-user / owner identity · input validation</p>
+              <p class="caption">Server-side secrets · connector credentials · adapters · policy / action gating</p>
+              <div class="request-path">React browser → Node/server API → application/domain logic → Supabase</div>
+            </div>
+            <div class="connector" aria-hidden="true">↓</div>
+            <div class="domains layer">{domains.map(([title, text]) => <div class:list={['domain', { protected: title.startsWith('Finance') }]}><h3>{title}</h3><p>{text}</p></div>)}</div>
+            <div class="connector state-connector" aria-hidden="true"><i></i><span>↓</span></div>
+            <div class="state layer" id="dash-canonical">
+              <h3>Supabase / Postgres + RLS</h3>
+              <strong>Durable structured application state</strong>
+              <p>Tasks · captures · people · goals · decisions · links<br />Health samples / rollups · calendar cache / events<br />Reviews · notifications · audit / action state</p>
+              <p class="caption">Domain-owned records; distinct reconciliation and access semantics.</p>
+            </div>
+            <div class="connector" aria-hidden="true">↓</div>
+            <div class="compute layer">
+              <div><h3>Deterministic logic</h3><p>Finance math · task ranking · queue logic · health rollups · read models · derived state</p><span class="return-label">↓ server-owned outputs</span></div>
+              <div class="ai-path"><h3>AI interpretation</h3><p>Classification · field / people / fact extraction · review refinement · embeddings · search / Ask synthesis</p><span class="return-label">↑ structured output → policy gate → state</span><span class="caption">Original inputs stay intact.</span></div>
+              <div><h3>Memory / Brain</h3><p>Sanitized summaries / <code>memory_chunks</code> → embeddings → pgvector → similarity search → cited Ask</p><a class="return-label" href="#dash-canonical">↑ source references to canonical records</a><span class="caption">Secondary retrieval index</span></div>
+            </div>
+            <div class="connector read-connector" aria-hidden="true"><i></i><span>↓</span></div>
+            <div class="read-models layer"><h3>Read models → product surfaces</h3><p><strong>Home: cross-domain aggregator</strong><br />Tasks · People · Health · Finance · Review · Brain · Settings</p></div>
+            <div class="connector" aria-hidden="true">↓</div>
+            <div class="ui layer"><h3>React / TypeScript / Vite UI</h3><p>Consumes server-owned read models through the Node API.</p></div>
+            <div class="connector" aria-hidden="true">↓</div>
+            <div class="actions layer"><div><h3>Uncertain / low confidence</h3><p>Policy gate → Review</p></div><div><h3>Safe / reversible internal actions</h3><p>Controlled execution → undo / audit where supported</p></div></div>
+          </div>
+          <aside class="runtime">
+            <div><p class="eyebrow">Background runtime</p><h3>Netlify</h3><p>Server adapter<br />Scheduled functions / cron-like work</p><ul><li>Finance sync</li><li>Calendar sync</li><li>Telegram notifications</li><li>Indexing / maintenance</li></ul><p class="caption">Invokes server-owned pipelines; preserves the core Node architecture.</p></div>
+            <div class="later"><p class="eyebrow">Later direction</p><h3>Private always-on worker</h3><p>Heavier private workflows · planner / extractor runs · run history · structured outputs · source references</p><p class="caption">A direction of travel, not a replacement for the entire hosted backend.</p></div>
+            <div class="later"><h3>Partial / evolving inputs</h3><p>Gmail / email ingestion · future worker inputs</p></div>
+          </aside>
+        </div>
+      </figure>
+    </section>
+
+    <section aria-labelledby="structured-title">
+      <div class="reading"><p class="eyebrow">02 / STRUCTURED STATE</p><h2 id="structured-title">Turning messy inputs into something I could trust</h2>
+        <p>I imagined the system as being able to speak into my phone anytime I wanted and say something like "I need to finish the mechanics problem set Friday" or "Just met Costanza from IBM" and it would automatically go where it belonged.</p>
+        <p>The model pulled structure out of the sentence—what it was, when it was due, what it related to—then Dash would store the hard deadline, decide the day I should focus on it and its current priority. That meant ordinary code would rank the queue, and if a capture was uncertain, it would route to Review instead of silently committing it.</p>
+      </div>
+      <ol class="flow wide" aria-label="Capture to task pipeline">{captureFlow.map(step => <li>{step}</li>)}</ol>
+      <div class="wide capture-composition">
+        <figure><img src={assets + '02-capture.png'} width="1324" height="522" loading="lazy" alt="Capture dialog accepting text or voice, with Auto, Task and Note modes and a reminder that uncertain items go to Review." /><figcaption>One input. Structure comes after capture.</figcaption></figure>
+        <figure><img src={assets + '03-tasks.png'} width="2940" height="1912" loading="lazy" alt="Synthetic task queue grouped into overdue, today, this week and waiting, with priorities and due dates." /><figcaption>Deterministic state becomes a ranked queue.</figcaption></figure>
+      </div>
+      <div class="health-story wide">
+        <div><h3 class="subheading">An update isn't always an event</h3><p>My health data broke the first version of that system because repeated Apple Health exports looked like new records, but they were really just updated snapshots. Because my system was treating every upload as append-only data, there were duplicates everywhere and rollups no longer matched reality. To fix this, I added a decision matrix for what an incoming record meant—event, update, or snapshot—and reconciled it before deriving the daily state.</p></div>
+        <figure><img src={assets + '05-health-overview.png'} width="2940" height="1912" loading="lazy" alt="Health overview showing synthetic steps, sleep, habits and a fourteen-day sleep projection derived from reconciled data." /><figcaption>Daily state depends on what an upload means.</figcaption></figure>
+      </div>
+      <div class="comparison wide"><div><span class="eyebrow">Wrong / append-only</span><ol class="flow">{['snapshot','append','upload again','append','double count'].map(step => <li>{step}</li>)}</ol></div><div><span class="eyebrow">Right / reconcile first</span><ol class="flow">{['snapshot','reconcile','canonical samples','daily rollup'].map(step => <li>{step}</li>)}</ol></div></div>
+    </section>
+
+    <section aria-labelledby="memory-title">
+      <div class="reading"><p class="eyebrow">03 / MEMORY + AUTONOMY</p><h2 id="memory-title">Useful AI needs boundaries</h2><p>The Brain is my attempt at building a vector DB of my life. I embedded sanitized summaries of existing state into pgvector, then kept references back to the original records, which allowed me to create a chat where answers can cite the original input they were using.</p></div>
+      <ol class="flow wide" aria-label="Brain retrieval pipeline">{memoryFlow.map(step => <li>{step}</li>)}</ol>
+      <div class="wide memory-story">
+        <figure class="brain"><img src={assets + '09-brain.png'} width="2940" height="1912" loading="lazy" alt="Brain search for atlas returning a capture and related tasks with source types and dates." /><figcaption>Known-result search · cited answers · no-evidence refusal · suggestions couldn't mutate state</figcaption></figure>
+        <div class="policy-copy"><p>Adding an agent automation layer created a new problem: being able to do something didn't mean Dash should deploy agents automatically. I solved this by implementing a confidence scale where reversible actions could move on their own, but uncertain or more consequential changes went through Review, with thresholds and undo built into the action flow.</p>
+          <div class="policy-diagram" aria-label="Confidence routes input to review or reversible action"><span>input</span><span aria-hidden="true">↓</span><span>classify + extract</span><span aria-hidden="true">↓</span><span>confidence</span><div class="policy-fork"><div>↙<br />review</div><div>↘<br />safe action<br />↓<br />undo / audit</div></div></div>
+        </div>
+        <figure class="automation"><img src={assets + '10-ai-automation.png'} width="2940" height="1912" loading="lazy" alt="Automation settings showing paused execution, Review first policies, Auto when certain options and advanced confidence thresholds." /><figcaption>Autonomy is a policy decision, pipeline by pipeline.</figcaption></figure>
+      </div>
+    </section>
+
+    <section aria-labelledby="production-title">
+      <div class="reading"><p class="eyebrow">04 / PRODUCTION</p><h2 id="production-title">The one-minute sync that wrecked the database</h2><p>I had about twenty calendars to keep fresh and Google's API quotas made a one-minute sync look cheap.</p><p class="pullquote">Turns out I was measuring the wrong system.</p><p>There was a huge bottleneck downstream, where scheduled functions started overlapping, making Calendar consume roughly 83% of the system's entire scheduled runtime while the database was doing an absurd amount of repeated work: roughly 47.6 million <code>calendar_events</code> updates against only ~4.3K live rows.</p></div>
+      <dl class="metrics wide">{metrics.map(([value,label]) => <div><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+      <ol class="flow causal wide" aria-label="Calendar incident causal sequence">{incidentFlow.map(step => <li>{step}</li>)}</ol>
+      <div class="reading"><p>So I shut the sync down, let Supabase recover, dropped the cadence to every fifteen minutes, and now I know not to size a system against just the API quota.</p></div>
+    </section>
+
+    <section aria-labelledby="lessons-title">
+      <div class="reading"><p class="eyebrow">05 / WHAT I LEARNED</p><h2 id="lessons-title">I added integrations faster than I defined to the existing system what they meant</h2><p>Looking back, this was clearly the recurring mistake. I kept adding APIs because it was easy, but then failed to immediately define to the system whether their data was authoritative, whether a repeated value was an event or a snapshot, how to reconcile conflicts, and what to do if that part of the pipeline failed.</p></div>
+      <ol class="flow contract wide" aria-label="Ingestion contract">{contract.map(step => <li>{step}</li>)}</ol>
+      <p class="reading pullquote conclusion">Planning out integrations involved more than just connecting APIs; it's about deciding how an external fact is allowed to become an internal truth.</p>
+    </section>
+    <section class="ending" aria-labelledby="ending-title"><div class="reading"><h2 id="ending-title">This system is retired.</h2><p>By October I wasn't actively developing Dash anymore, but keeping the live version meant maintaining its database, credentials, scheduled jobs, and private integrations. So I decided to retire the backend and rebuild the frontend as a synthetic archive instead. It looks and behaves like the final Dash UI, but it is no longer connected to my live data or private services.</p><a class="archive" href="https://dash.tristandh.com">Explore Dash ↗</a></div><figure class="wide bookend"><img src={assets + '11-home-light.png'} width="2940" height="1912" loading="lazy" alt="The retired Dash interface preserved as a synthetic archive, showing Home in light mode." /></figure></section>
+  </article>
+</Layout>
+
+<style>
+  .dash{font-size:15px;line-height:1.85;--diagram-font:ui-monospace,SFMono-Regular,Consolas,monospace}
+  .reading{max-width:640px}.intro{padding-top:24px}.eyebrow{font:10px/1.6 var(--diagram-font);letter-spacing:.12em;color:var(--muted);margin-bottom:18px}
+  h1{font-size:clamp(48px,7vw,76px);margin-bottom:22px}h2{font-family:Georgia,'Times New Roman',serif;font-size:clamp(27px,4vw,36px);font-weight:400;line-height:1.25;margin-bottom:25px}
+  .lead{font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:1.5}.dash p{margin-bottom:23px}.archive{display:inline-flex;align-items:center;min-height:44px;font-size:14px;text-decoration:underline;text-decoration-color:var(--line)}
+  .dash .caption,figcaption{font-size:11px;color:var(--muted);line-height:1.7}.dash .caption{margin:0}.wide{width:min(1140px,calc(100vw - 96px));margin-left:50%;transform:translateX(-50%)}
+  figure{margin-top:0;margin-bottom:0}img{display:block;width:100%;height:auto;border:1px solid var(--line)}figcaption{padding-top:10px}.hero{margin-top:38px;margin-bottom:85px}
+  section{border-top:1px solid var(--line);padding-top:32px;margin-top:80px}.annotation{border-left:2px solid var(--accent);padding-left:20px;font-weight:500}.dash .runtime-note{margin:26px 0 36px;max-width:550px}
+  .architecture{border-block:1px solid var(--line);padding:20px 0 28px}.diagram-heading{display:flex;justify-content:space-between;gap:20px;font:10px/1.7 var(--diagram-font);padding:0 0 24px}
+  .topology{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:28px}.main-path,.topology>*{min-width:0}.sources,.domains{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}.architecture h3{font:11px/1.6 var(--diagram-font);text-transform:uppercase;letter-spacing:.025em;margin:0 0 8px;color:var(--ink)}.architecture p{font-size:12px;line-height:1.7;margin:0}.sources>div{border-top:1px solid var(--ink);padding-top:12px}
+  .connector{height:30px;text-align:center;color:var(--muted);font-size:15px;position:relative}.connector i{position:absolute;top:0;width:4px;height:4px;border-radius:50%;background:var(--accent);left:50%;animation:packet 4.8s linear infinite;animation-play-state:paused;opacity:0}.input-connector i:first-child{left:12.5%}.input-connector i:nth-child(2){left:62.5%;animation-delay:1.6s}.state-connector i{animation-delay:2.4s}.read-connector i{animation-delay:3.6s}
+  .boundary{border:1px solid var(--accent);padding:18px 22px}.request-path{font:11px/1.8 var(--diagram-font);border-top:1px solid var(--line);margin-top:12px;padding-top:10px;overflow-wrap:anywhere}.domain{border-left:1px solid var(--line);padding:0 12px}.domain.protected{border-left:2px solid var(--accent);background:var(--hover);padding:10px}.state{background:var(--hover);border-block:2px solid var(--ink);padding:20px 24px}.state strong{display:block;font-family:Georgia,serif;font-size:21px;font-weight:400;margin-bottom:8px}.state .caption{margin-top:8px}
+  .compute{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}.compute>div{border-top:1px solid var(--line);padding-top:14px}.return-label{display:block;font:10px/1.7 var(--diagram-font);color:var(--accent);margin-top:12px}.compute .caption{display:block;font-size:10px;margin-top:6px}.read-models,.ui{border-block:1px solid var(--line);padding:14px 20px}.ui{background:var(--hover)}.actions{display:grid;grid-template-columns:1fr 1fr;gap:20px;border-left:2px solid var(--accent);padding-left:18px}
+  .runtime{border-left:1px solid var(--line);padding-left:20px}.runtime>div{margin-bottom:30px}.runtime ul{padding-left:16px;font-size:11px;line-height:1.9}.runtime .eyebrow{font-size:9px;margin-bottom:14px}.runtime .caption{margin-top:12px}.later{border:1px dashed var(--muted);padding:12px}.architecture code{overflow-wrap:anywhere;font-size:11px}.layer{min-width:0}
+  .flow{display:flex;flex-wrap:wrap;gap:9px 0;list-style:none;padding:20px 0;border-block:1px solid var(--line);font:11px/1.9 var(--diagram-font);margin-top:30px;margin-bottom:30px}.flow li{display:flex;align-items:baseline;min-width:0}.flow li:not(:last-child)::after{content:'→';color:var(--muted);padding:0 14px}
+  .capture-composition{display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:32px;margin-top:38px;margin-bottom:65px}.health-story{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}.subheading{font-family:Georgia,serif;font-size:25px;font-weight:400;line-height:1.35;margin-top:0}.comparison{margin-top:30px;border-top:1px solid var(--line)}.comparison>div{display:grid;grid-template-columns:170px 1fr;align-items:baseline;border-bottom:1px solid var(--line);padding:16px 0}.comparison .flow{border:0;padding:0;margin:0}.comparison .eyebrow{margin:0}.comparison>div:first-child{color:var(--muted)}
+  .memory-story{display:grid;grid-template-columns:1fr 1.2fr;gap:35px 45px;align-items:start}.brain{grid-column:1;grid-row:1}.policy-copy{grid-column:1;grid-row:2}.automation{grid-column:2;grid-row:1 / span 2;margin-top:75px}.policy-diagram{font:11px/1.8 var(--diagram-font);text-align:center;margin-top:30px;border-block:1px solid var(--line);padding:20px}.policy-diagram>span{display:block}.policy-fork{display:grid;grid-template-columns:1fr 1fr;max-width:280px;margin:auto}.policy-fork>div{min-width:0}.pullquote{font:26px/1.5 Georgia,serif;padding:20px 0}.metrics{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-block:1px solid var(--line);padding:22px 0;gap:18px;margin-top:30px;margin-bottom:30px}.metrics>div{display:flex;flex-direction:column-reverse;justify-content:end}.metrics dt{font:10px/1.7 var(--diagram-font);color:var(--muted)}.metrics dd{margin:0 0 8px;font:28px/1.3 Georgia,serif}.causal{border:0;padding-top:0}.conclusion{padding:30px 0;margin-bottom:0}.bookend{margin-top:38px}.ending{margin-top:55px}.dash code{font-size:.9em}
+  @keyframes packet{0%,15%{opacity:0;transform:translateY(0)}25%,65%{opacity:.8}80%,100%{opacity:0;transform:translateY(28px)}}
+  @keyframes layer-in{from{opacity:.65;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+  @media(prefers-reduced-motion:no-preference){.architecture.in-view .connector i{animation-play-state:running}.architecture.in-view .layer{animation:layer-in .65s ease-out both}.architecture.in-view .compute{animation-delay:.12s}.architecture.in-view .read-models{animation-delay:.24s}}
+  @media(max-width:1000px){.topology{grid-template-columns:1fr}.runtime{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;border-left:0;border-top:1px solid var(--line);padding:20px 0 0}.runtime>div{margin:0}.health-story{gap:28px}.metrics{grid-template-columns:repeat(4,minmax(0,1fr));row-gap:24px}}
+  @media(max-width:650px){.wide{width:100%;margin-left:0;transform:none}.hero{margin-bottom:55px}.intro{padding-top:15px}.lead{font-size:22px}section{margin-top:55px}.diagram-heading{flex-direction:column;gap:6px}.sources,.domains,.compute,.actions,.runtime{grid-template-columns:1fr}.sources{gap:14px}.sources>div{display:grid;grid-template-columns:90px 1fr;gap:12px}.sources h3{margin:0}.domains{gap:18px}.boundary{padding:16px}.state{padding:18px 16px}.compute{gap:18px}.runtime{gap:18px}.request-path{font-size:10px}.capture-composition,.health-story,.memory-story{grid-template-columns:1fr;gap:25px}.capture-composition{margin-bottom:45px}.brain,.policy-copy,.automation{grid-column:auto;grid-row:auto;margin-top:0}.comparison>div{grid-template-columns:1fr;gap:15px}.flow{flex-direction:column;gap:0}.flow li{flex-direction:column}.flow li:not(:last-child)::after{content:'↓';padding:5px 0}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.metrics dd{font-size:28px}.pullquote{font-size:23px}.architecture p,.architecture h3{font-size:12px}.input-connector i:first-child,.input-connector i:nth-child(2){left:50%}}
+</style>
+<script>
+  const diagram = document.querySelector<HTMLElement>('.architecture');
+  if (diagram && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const observer = new IntersectionObserver(([entry]) => {
+      diagram.classList.toggle('in-view', entry.isIntersecting);
+    }, { threshold: 0 });
+    observer.observe(diagram);
+    window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
+  }
+</script>
