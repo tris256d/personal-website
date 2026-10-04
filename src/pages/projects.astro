@@ -4,8 +4,17 @@ import { projects } from '../data/projects';
 ---
 <Layout title="Projects">
   <h1>Projects</h1>
-  <div class="projects">{projects.map(project => <details class="project">
-    <summary><span>{project.title}</span><span class="project-year">{project.year}</span></summary>
-    <div class="project-detail"><p>{project.description}</p><div class="project-meta">{project.url && <a href={project.url}>Visit ↗</a>}{project.repo && <a href={project.repo}>Source ↗</a>}</div></div>
-  </details>)}</div>
+  <p class="projects-intro">Things I've built, shipped, investigated, and occasionally abandoned.</p>
+  {['Selected', 'More builds'].map(tier => <section class="project-group" aria-label={tier}>
+    <h2>{tier}</h2>
+    <div class="projects">{projects.filter(project => project.tier === tier).map(project =>
+      <a class="project" href={`/projects/${project.slug}`}>
+        <span class="project-heading"><span>{project.title}</span><span class="project-year">{project.year}</span></span>
+        <span class="project-expansion"><span class="project-detail">
+          <span class="project-description">{project.description}</span>
+          <span class="project-meta"><span>{project.type}</span>{project.tags.length > 0 && <span>{project.tags.join(' · ')}</span>}<span aria-hidden="true">↗</span></span>
+        </span></span>
+      </a>
+    )}</div>
+  </section>)}
 </Layout>

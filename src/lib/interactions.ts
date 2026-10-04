@@ -77,9 +77,6 @@ terminalForm.addEventListener('submit',e=>{e.preventDefault();const command=term
  if(command==='now'||command==='ask'){location.href='/'+command;return;}
  terminalOutput.textContent+='\n❯ '+command+'\n'+(output[command]||'Unknown command. Try help.');terminalOutput.scrollTop=terminalOutput.scrollHeight;
 });
-// Native details provide keyboard and touch access; pointer hover is an enhancement.
-if(matchMedia('(hover:hover) and (pointer:fine)').matches){document.querySelectorAll<HTMLDetailsElement>('.project').forEach(project=>{let pinned=project.open;project.addEventListener('pointerenter',()=>{project.open=true;});project.addEventListener('pointerleave',()=>{project.open=pinned;});project.querySelector('summary')!.addEventListener('click',e=>{e.preventDefault();pinned=!pinned;project.open=pinned;});});}
-
 // Five quick clicks/taps on the clock open the hidden map.
 let clockClicks: number[] = [];
 time.addEventListener('click', () => {

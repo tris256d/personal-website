@@ -10,6 +10,7 @@ let hash = process.env.COMMIT_REF?.slice(0,7) || '';
 try { if (!hash) hash = execSync('git rev-parse --short HEAD').toString().trim(); } catch {}
 const commands = [
  ...['About','Projects','Notes','Ask','Now','Library'].map(label => ({ label, href: '/' + label.toLowerCase(), detail: 'Page' })),
+ ...(site.email ? [{ label:'Email', href:`mailto:${site.email}`, detail:'Elsewhere' }] : []),
  { label:'Copy email', action:'email', detail: site.email ? 'Clipboard' : 'Not added yet' },
  { label:'GitHub', href:site.github, detail:'Elsewhere' },
  { label:'LinkedIn', ...(site.linkedin ? { href:site.linkedin } : { action:'unavailable' }), detail:site.linkedin ? 'Elsewhere' : 'Not added yet' },
@@ -20,7 +21,7 @@ const commands = [
  { label:'RSS', href:'/rss.xml', detail:'Notes feed' },
  ...(hash ? [{ label:'Current build / commit', href:`${site.source}/commit/${process.env.COMMIT_REF || hash}`, detail:hash }] : []),
  { label:'Keyboard shortcuts', action:'help', detail:'Reference' },
- ...projects.filter(p => p.url || p.repo).map(p => ({ label:p.title, href:p.url || p.repo, detail:'Project' })),
+ ...projects.map(p => ({ label:p.title, href:'/projects/'+p.slug, detail:p.type })),
  ...notes.map(n => ({ label:n.title, href:'/notes/'+n.slug, detail:'Note' }))
 ];
 ---
@@ -48,7 +49,7 @@ const commands = [
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <div class="shell">
-<header><a class="name" href="/">{site.name}</a><nav aria-label="Main">{['About','Projects','Notes','Ask'].map(label => <a href={'/'+label.toLowerCase()} aria-current={pathname.startsWith('/'+label.toLowerCase()) ? 'page' : undefined}>{label}</a>)}</nav></header>
+<header><a class="name" href="/">{site.name}</a><nav aria-label="Main">{['About','Projects','Ask'].map(label => <a href={'/'+label.toLowerCase()} aria-current={pathname.startsWith('/'+label.toLowerCase()) ? 'page' : undefined}>{label}</a>)}</nav></header>
 <main id="main" tabindex="-1"><slot /></main>
 <footer><button class="launcher" data-open="palette" aria-label="Open command palette">⌘ K</button><time id="nyc-time" data-timezone={site.timezone} aria-label="Current New York time">NYC · --:--</time></footer>
 </div>

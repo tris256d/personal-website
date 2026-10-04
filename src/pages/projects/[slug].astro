@@ -1,0 +1,22 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { projects } from '../../data/projects';
+export function getStaticPaths() {
+  return projects.map(project => ({ params: { slug: project.slug }, props: { project } }));
+}
+const { project } = Astro.props;
+---
+<Layout title={project.title} description={project.description}>
+  <a class="back" href="/projects">← Projects</a>
+  <article class="project-page">
+    <p class="project-kicker">{project.year} · {project.type}{project.status && ` · ${project.status}`}</p>
+    <h1>{project.title}</h1>
+    <div class="prose">
+      <p>{project.description}</p>
+      {project.tags.length > 0 && <p class="project-tags">{project.tags.join(' · ')}</p>}
+      {project.sections?.map(section => <section><h2>{section.title}</h2><p>{section.body}</p></section>)}
+      {!project.sections?.length && <aside class="project-progress">Documentation in progress</aside>}
+      {(project.url || project.repo) && <div class="project-meta">{project.url && <a href={project.url}>Visit ↗</a>}{project.repo && <a href={project.repo}>Source ↗</a>}</div>}
+    </div>
+  </article>
+</Layout>
