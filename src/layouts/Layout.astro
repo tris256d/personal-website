@@ -23,19 +23,19 @@ const commands = [
 ];
 ---
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>{title ? `${title} — ${site.name}` : site.name}</title>
 <meta name="description" content={description} /><link rel="canonical" href={new URL(Astro.url.pathname, site.url)} />
-<meta property="og:title" content={title ? `${title} — ${site.name}` : site.name} /><meta property="og:description" content={description} /><meta property="og:type" content="website" /><meta property="og:url" content={new URL(Astro.url.pathname, site.url)} /><meta property="og:image" content={new URL('/og.png', site.url)} /><meta name="theme-color" content="#f6f5f1" />
+<meta property="og:title" content={title ? `${title} — ${site.name}` : site.name} /><meta property="og:description" content={description} /><meta property="og:type" content="website" /><meta property="og:url" content={new URL(Astro.url.pathname, site.url)} /><meta property="og:image" content={new URL('/og.png', site.url)} /><meta name="theme-color" content="#1c1d1b" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <script is:inline>
 (() => {
  const system = matchMedia('(prefers-color-scheme: dark)');
  const apply = () => {
   let saved; try { saved = localStorage.getItem('theme'); } catch {}
-  const theme = saved === 'light' || saved === 'dark' ? saved : system.matches ? 'dark' : 'light';
+  const theme = saved === 'light' || saved === 'dark' ? saved : saved === 'system' && !system.matches ? 'light' : 'dark';
   document.documentElement.dataset.theme = theme;
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#1c1d1b' : '#f6f5f1');
  };

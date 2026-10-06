@@ -1,0 +1,50 @@
+---
+import { nowSnapshots } from '../data/nowSnapshots';
+const snapshots = [...nowSnapshots].sort((a, b) => b.date.localeCompare(a.date));
+---
+<div data-now-snapshots>
+  <div aria-live="polite" aria-atomic="true">
+    {snapshots.map((snapshot, index) => (
+      <div data-snapshot data-label={snapshot.label} hidden={index !== 0}>
+        <span class="sr-only">{snapshot.label}</span>
+        <article class="prose now">
+          <table aria-label={`Now — ${snapshot.label}`}><tbody>
+            {snapshot.entries.map(entry => entry
+              ? <tr><td>{entry[0]}</td><td>{entry[1]}</td></tr>
+              : <tr aria-hidden="true"><td></td><td></td></tr>)}
+          </tbody></table>
+        </article>
+      </div>
+    ))}
+  </div>
+  <p class="updated snapshot-controls">
+    <button type="button" data-previous aria-label="Previous Now snapshot" disabled={snapshots.length < 2}>←</button>
+    <span data-updated>Updated {snapshots[0].label}</span>
+    <button type="button" data-next aria-label="Next Now snapshot" disabled>→</button>
+  </p>
+</div>
+<script>
+  document.querySelectorAll<HTMLElement>('[data-now-snapshots]').forEach(archive => {
+    const snapshots = [...archive.querySelectorAll<HTMLElement>('[data-snapshot]')];
+    const previous = archive.querySelector<HTMLButtonElement>('[data-previous]')!;
+    const next = archive.querySelector<HTMLButtonElement>('[data-next]')!;
+    const updated = archive.querySelector<HTMLElement>('[data-updated]')!;
+    let current = 0;
+    function show(index: number) {
+      if (index < 0 || index >= snapshots.length) return;
+      current = index;
+      snapshots.forEach((snapshot, i) => { snapshot.hidden = i !== current; });
+      updated.textContent = `Updated ${snapshots[current].dataset.label}`;
+      previous.disabled = current === snapshots.length - 1;
+      next.disabled = current === 0;
+    }
+    previous.addEventListener('click', () => show(current + 1));
+    next.addEventListener('click', () => show(current - 1));
+  });
+</script>
+<style>
+  .snapshot-controls{display:flex;align-items:center;gap:4px}
+  .snapshot-controls button{font:inherit;width:32px;padding:0;color:var(--muted)}
+  .snapshot-controls button:hover:not(:disabled){color:var(--accent)}
+  .snapshot-controls button:disabled{opacity:.25;cursor:default}
+</style>

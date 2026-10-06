@@ -29,7 +29,7 @@ async function run(command:Command){
  if(command.href){location.href=command.href;return;}
  if(command.action==='help'){open(help);return;}
  if(command.action==='light'||command.action==='dark'||command.action==='system'){
- const theme=command.action;try{if(theme==='system')localStorage.removeItem('theme');else localStorage.setItem('theme',theme);}catch{}
+ const theme=command.action;try{localStorage.setItem('theme',theme);}catch{}
  document.documentElement.dataset.theme=theme==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):theme;
  window.dispatchEvent(new Event('site-theme'));
  status.textContent=`Switched to ${theme} theme.`;return;
