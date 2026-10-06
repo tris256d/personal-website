@@ -21,7 +21,7 @@ const categories = Object.entries(library).map(([key, category]) => ({
       {sections.map(({ label, items }, index) => (
         <section aria-labelledby={`${key}-section-${index}`}>
           <h2 id={`${key}-section-${index}`}>{label}</h2>
-          <ul>{items.map(({ title, byline, url, score, thought, noteSlug }) => (
+          <ul>{items.map(({ title, byline, url, score, thought }) => (
             <li>
               <div class="reading-row">
                 <cite>{url ? <a href={url} target="_blank" rel="noopener noreferrer">{title}<span aria-hidden="true"> ↗</span></a> : title}</cite>
@@ -30,7 +30,6 @@ const categories = Object.entries(library).map(([key, category]) => ({
                 {score !== undefined && <span class="score">{score}/10</span>}
               </div>
               {thought && <p class="thought">{thought}</p>}
-              {noteSlug && <a class="note-link" href={`/notes/${noteSlug}`}>note ↗</a>}
             </li>
           ))}</ul>
         </section>

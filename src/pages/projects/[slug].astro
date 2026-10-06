@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import { projects } from '../../data/projects';
 export function getStaticPaths() {
-  return projects.filter(project => project.slug !== 'unidine').map(project => ({ params: { slug: project.slug }, props: { project } }));
+  return projects.filter(project => !['dash', 'unidine'].includes(project.slug)).map(project => ({ params: { slug: project.slug }, props: { project } }));
 }
 const { project } = Astro.props;
 ---

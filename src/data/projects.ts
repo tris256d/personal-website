@@ -14,6 +14,12 @@ export type Project = {
 
 export const projects: Project[] = [
   {
+    slug: 'dash', title: 'Dash', year: '2026', tier: 'Selected', type: 'Case study',
+    description: 'A private operating system I built to centralize the different systems of my life.',
+    status: 'Archived', tags: ['systems', 'structured state', 'AI'],
+    url: 'https://dash.tristandh.com',
+  },
+  {
     slug: 'syllabl', title: 'Syllabl', year: '2026', tier: 'Selected', type: 'Project',
     description: 'An active project exploring ChatGPT plugins, tooling, and agent infrastructure.',
     status: 'In progress', tags: ['ChatGPT', 'plugins', 'agent infrastructure'],
