@@ -5,6 +5,25 @@ import { execSync } from 'node:child_process';
 import '../styles/global.css';
 const { title, description = site.description } = Astro.props;
 const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
+const person = {
+ '@type': 'Person',
+ '@id': `${site.url}/#person`,
+ name: site.name,
+ url: site.url,
+ description: 'Tristan de Halleux is a computer scientist and physics student at Columbia University in New York and a builder working across AI infrastructure, computer systems, networking, robotics, software, and physical systems.',
+ sameAs: [site.github, site.linkedin].filter(Boolean),
+ affiliation: { '@type': 'CollegeOrUniversity', name: 'Columbia University' },
+};
+const identity = {
+ '@context': 'https://schema.org',
+ '@graph': [person, ...(pathname === '/about' ? [{
+  '@type': 'ProfilePage',
+  '@id': `${site.url}/about#profile`,
+  url: `${site.url}/about`,
+  name: `About ${site.name}`,
+  mainEntity: { '@id': person['@id'] },
+ }] : [])],
+};
 let hash = process.env.COMMIT_REF?.slice(0,7) || '';
 try { if (!hash) hash = execSync('git rev-parse --short HEAD').toString().trim(); } catch {}
 const commands = [
@@ -29,6 +48,8 @@ const commands = [
 <title>{title ? `${title} — ${site.name}` : site.name}</title>
 <meta name="description" content={description} /><link rel="canonical" href={new URL(Astro.url.pathname, site.url)} />
 <meta property="og:title" content={title ? `${title} — ${site.name}` : site.name} /><meta property="og:description" content={description} /><meta property="og:type" content="website" /><meta property="og:url" content={new URL(Astro.url.pathname, site.url)} /><meta property="og:image" content={new URL('/og.png', site.url)} /><meta name="theme-color" content="#1c1d1b" />
+<link rel="describedby" href="/llms.txt" />
+<script is:inline type="application/ld+json" set:html={JSON.stringify(identity).replace(/</g, '\\u003c')} />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <script is:inline>
 (() => {
