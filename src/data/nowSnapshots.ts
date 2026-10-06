@@ -8,6 +8,20 @@ export type NowSnapshot = {
 // A null entry preserves the visual break between Reading and Exploring.
 export const nowSnapshots: NowSnapshot[] = [
   {
+    date: '2026-08',
+    label: 'August 2026',
+    entries: [
+      ['Building', 'Dash'],
+      ['Studying', '-'],
+      ['Reading', 'Dune VI'],
+      null,
+      ['Exploring', 'California'],
+      ['Learning', 'Endurance Disciplines'],
+      ['Training', 'Cycling and hiking in the California wilderness'],
+      ['Location', 'San Francisco'],
+    ],
+  },
+  {
     date: '2026-09',
     label: 'September 2026',
     entries: [
