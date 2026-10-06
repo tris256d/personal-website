@@ -46,7 +46,7 @@ function render(){
    filtered.push({label:`Ask "${question}"`,detail:'Ask',href:'/ask?q='+encodeURIComponent(question)});
  }
  filtered.forEach((command,index)=>{const b=document.createElement('button');b.type='button';const label=document.createElement('span');label.textContent=command.label;const detail=document.createElement('small');detail.textContent=command.detail;b.append(label,detail);b.addEventListener('click',()=>void run(command));b.addEventListener('focus',()=>{active=index;highlight();});b.addEventListener('pointermove',()=>{active=index;highlight();});results.append(b);});
- if(!filtered.length){const p=document.createElement('p');p.className='dialog-hint';p.textContent='No matches. Try a page, project, or note.';results.append(p);}highlight();
+ if(!filtered.length){const p=document.createElement('p');p.className='dialog-hint';p.textContent='No matches. Try a page or project.';results.append(p);}highlight();
 }
 search.addEventListener('input',render);
 palette.addEventListener('keydown',e=>{
@@ -59,7 +59,7 @@ document.addEventListener('keydown',e=>{
  if(e.key==='Escape'){closeAll();return;}
  const target=e.target as HTMLElement;
  if(target.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"])')||e.metaKey||e.ctrlKey||e.altKey||document.querySelector('dialog[open]'))return;
- const routes:Record<string,string>={a:'/about',p:'/projects',n:'/notes','/':'/ask'};
+ const routes:Record<string,string>={a:'/about',p:'/projects','/':'/ask'};
  if(routes[e.key]){e.preventDefault();location.href=routes[e.key];}
  if(e.key==='?'){e.preventDefault();open(help);}
  if(e.key==='~'){e.preventDefault();open(terminal);}
