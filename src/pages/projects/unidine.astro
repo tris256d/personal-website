@@ -1,0 +1,110 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { projects } from '../../data/projects';
+const project = projects.find(project => project.slug === 'unidine')!;
+const appStoreUrl = project.url?.startsWith('https://apps.apple.com/') ? project.url : undefined;
+const assets = '/projects/unidine';
+---
+<Layout title="UniDine" description={project.description}>
+  <a class="back" href="/projects">← Projects</a>
+  <article class="project-page unidine">
+    <div class="title"><img src={`${assets}/logo.jpg`} width="36" height="36" alt="UniDine logo" /><h1>UniDine</h1></div>
+    <p class="subtitle">A dining app for Columbia students.</p>
+    <p>I was tired of checking LionDine and separate Columbia dining pages just to figure out where to eat. So during my first semester at Columbia, Abhi Nandiraju and I built and shipped UniDine: live dining hours, menus, and local student deals in one iOS app.</p>
+    <p class="project-kicker">2025–26 · React Native / Expo · Firebase · iOS<br />Co-founder — product, launch, merchant outreach &amp; App Store</p>
+    <figure class="hero"><img src={`${assets}/product.png`} width="2166" height="1180" alt="Four UniDine screens showing open dining halls, daily menus, student deals, and a local business with dorm delivery." fetchpriority="high" /></figure>
+
+    <section aria-labelledby="origin">
+      <h2 id="origin">01 — From annoyance to App Store</h2>
+      <div class="origin-grid">
+        <div>
+          <p>It started as something I wanted for myself: open an app, immediately see what dining halls were open, then check what they were serving.</p>
+          <p>The project quickly expanded into dynamic menu scraping, Barnard locations, nearby restaurants, student-only deals, and a merchant side. We walked Broadway and Amsterdam pitching businesses while simultaneously fighting Expo builds, Firebase auth, TestFlight crashes, provisioning profiles, and App Store review.</p>
+        </div>
+        <div class="evidence">
+          <figure><a href={`${assets}/analytics.png`} aria-label="View full App Store Connect analytics screenshot"><img src={`${assets}/analytics.png`} width="1563" height="1006" alt="App Store Connect: 1,074 UniDine units, January 29, 2025 through January 28, 2026." loading="lazy" /></a><figcaption>App Store Connect · captured Jan. 28, 2026</figcaption></figure>
+          <figure class="launch"><video muted loop playsinline preload="none" poster={`${assets}/launch-poster.jpg`} aria-label="UniDine Now Available launch video" width="720" height="1280" data-launch-video data-src={`${assets}/launch.mp4`}></video><figcaption>“Now Available”<br />Launch artifact · 2025</figcaption></figure>
+        </div>
+      </div>
+      <dl class="metrics">
+        <div><dt>1,074</dt><dd>App Store units in the captured period</dd></div>
+        <div><dt>250</dt><dd>downloads by Dec. 7, 2025</dd></div>
+        <div><dt>Dozens</dt><dd>of local businesses researched and approached</dd></div>
+      </dl>
+    </section>
+
+    <section aria-labelledby="product">
+      <h2 id="product">02 — The product</h2>
+      <p class="flow">What’s open → what’s being served → what’s nearby.</p>
+      <div class="concepts">
+        <p><strong>What’s Open</strong>Live opening status across Columbia and Barnard dining locations.</p>
+        <p><strong>Menus</strong>Daily scraped menus organized by meal period.</p>
+        <p><strong>Deals &amp; Recs</strong>Nearby businesses, student deals, and later dorm-delivery integration work.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="timeline">
+      <h2 id="timeline">03 — It became more real than expected</h2>
+      <dl class="timeline">
+        <div><dt>Sep 2025</dt><dd>Started from my frustration with existing dining websites</dd></div>
+        <div><dt>Oct</dt><dd>TestFlight, merchant outreach, first business interest</dd></div>
+        <div><dt>Nov</dt><dd>Public App Store launch and organic student adoption</dd></div>
+        <div><dt>Dec</dt><dd>250 downloads</dd></div>
+        <div><dt>Spring 2026</dt><dd>Began exploring/integrating dorm delivery with BiteCampus</dd></div>
+      </dl>
+      <p>Around the same time, Columbia dining software became unexpectedly crowded. New native dining apps appeared, LionDine became part of the Spectator ecosystem, and Columbia’s own dining tooling improved. I gradually stopped actively maintaining UniDine. The app stayed live and continued receiving baseline traffic.</p>
+    </section>
+
+    <section aria-labelledby="takeaways">
+      <h2 id="takeaways">04 — What I took from it</h2>
+      <p>UniDine was the first product I shipped at Columbia that strangers actually used.</p>
+      <p>I learned that building the interface was only part of the work. Keeping scraped data fresh, getting an iOS build through production, doing physical distribution, convincing merchants, and deciding what not to build mattered just as much.</p>
+      <p>More than anything, it showed me how quickly a tiny tool built for yourself can turn into a real product once other people begin depending on it.</p>
+    </section>
+    {appStoreUrl && <a class="text-link" href={appStoreUrl} target="_blank" rel="noopener noreferrer">App Store ↗</a>}
+  </article>
+</Layout>
+<script>
+  const video = document.querySelector<HTMLVideoElement>('[data-launch-video]');
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  function updatePlayback() {
+    if (!video) return;
+    if (motion.matches) {
+      video.pause();
+      video.removeAttribute('autoplay');
+      video.removeAttribute('src');
+      video.load();
+    } else {
+      video.muted = true;
+      video.autoplay = true;
+      video.src = video.dataset.src!;
+      video.play().catch(() => {});
+    }
+  }
+  updatePlayback();
+  motion.addEventListener('change', updatePlayback);
+</script>
+<style>
+  .unidine{font-size:14px;line-height:1.65}
+  .title{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .title img{border-radius:7px}.title h1{margin:0}
+  .subtitle{color:var(--muted);margin-bottom:18px}
+  p{margin-bottom:14px}.project-kicker{margin-bottom:20px}
+  figure{margin:0}img{display:block;width:100%;height:auto}.title img{width:36px}
+  .hero{margin-bottom:30px}
+  section{margin-top:28px}
+  h2{font:11px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:15px}
+  .origin-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  figcaption{font-size:10px;color:var(--muted);line-height:1.5;margin-top:6px}
+  .launch{display:flex;gap:12px;align-items:flex-end;margin-top:12px}
+  video{display:block;width:68px;height:auto;aspect-ratio:9/16;object-fit:contain;background:var(--hover)}
+  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:18px 0 0;padding-top:14px;border-top:1px solid var(--line)}
+  .metrics dt{font:26px/1.2 Georgia,'Times New Roman',serif;margin-bottom:7px}
+  dd{margin:0}.metrics dd{font-size:11px;color:var(--muted);max-width:180px}
+  .flow{margin-bottom:12px}
+  .concepts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;font-size:12px;color:var(--muted)}
+  .concepts p{margin:0}.concepts strong{display:block;color:var(--ink);font-weight:500;margin-bottom:4px}
+  .timeline{margin:0 0 16px;font-size:12px}.timeline div{display:grid;grid-template-columns:94px 1fr;gap:12px;padding:3px 0}
+  .timeline dt{font:11px/1.8 ui-monospace,monospace;color:var(--muted)}
+  @media(max-width:600px){.origin-grid{grid-template-columns:1fr;gap:8px}.metrics{gap:14px}.metrics dt{font-size:24px}.concepts{grid-template-columns:1fr;gap:12px}.hero{margin-bottom:26px}.launch video{width:84px}.timeline div{grid-template-columns:82px 1fr}}
+</style>

@@ -82,7 +82,7 @@ export const publicProfile = {
       year: '2025–26',
       status: 'shipped',
       description:
-        `A Columbia dining app Tristan co-built during his first semester. It reached roughly 200 downloads on launch day.`,
+        `A Columbia dining app Tristan co-built during his first semester. It reached 250 downloads by December 7, 2025.`,
       whyItIsInteresting:
         `It is an example of building for an immediate problem around him and getting real people to use the result rather than treating software only as a portfolio exercise.`,
       usefulWhen:
@@ -318,7 +318,7 @@ export const publicProfile = {
   CAREER_EVIDENCE: [
     `He founded and led a six-person startup called TheNetwork Labs.`,
     `He spent roughly eight months working on the startup before making the decision to step away.`,
-    `He co-built and launched UniDine, which reached roughly 200 downloads on launch day.`,
+    `He co-built and launched UniDine, which reached 250 downloads by December 7, 2025.`,
     `He is currently building People Exchange as a native iOS product.`,
     `He has worked around AI infrastructure and optical networking at Delos Data in Palo Alto.`,
     `He has worked in legal and immigration technology in San Francisco.`,

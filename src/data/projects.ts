@@ -35,8 +35,8 @@ export const projects: Project[] = [
     status: 'In use', tags: ['agents', 'workflows', 'personal systems'],
   },
   {
-    slug: 'unidine', title: 'UniDine', year: '2025–26', tier: 'Selected', type: 'Project',
-    description: 'A Columbia dining app I co-built and launched during my first semester, reaching 200 downloads on launch day.',
+    slug: 'unidine', title: 'UniDine', year: '2025–26', tier: 'Selected', type: 'Case study',
+    description: 'A dining app for Columbia students: live hours, menus, and local student deals.',
     status: 'Shipped', tags: ['iOS', 'product', 'consumer'],
   },
   {
